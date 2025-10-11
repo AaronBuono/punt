@@ -84,7 +84,8 @@ export function StreamPreview({ playbackUrl, fallbackSrc }: StreamPreviewProps) 
           const hls = new Hls({ enableWorker: true });
           hls.loadSource(playbackUrl);
           hls.attachMedia(video);
-          hls.on(Hls.Events.ERROR, (_event: string, data: { fatal?: boolean }) => {
+          hls.on(Hls.Events.ERROR, (_event: string, payload: unknown) => {
+            const data = payload as { fatal?: boolean } | undefined;
             if (data?.fatal) {
               hls.destroy();
               hlsRef.current = null;

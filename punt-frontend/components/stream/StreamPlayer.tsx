@@ -2,6 +2,10 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 
+type HlsErrorPayload = {
+  fatal?: boolean;
+};
+
 interface StreamPlayerProps {
   playbackUrl?: string | null;
   poster?: string;
@@ -24,7 +28,8 @@ export function StreamPlayer({ playbackUrl, poster, autoPlay = true, children }:
       const hls = new Hls({ enableWorker: true });
       hls.loadSource(playbackUrl);
       hls.attachMedia(video);
-      hls.on(Hls.Events.ERROR, (_evt: string, data: any) => {
+      hls.on(Hls.Events.ERROR, (_evt: string, payload: unknown) => {
+        const data = payload as HlsErrorPayload | undefined;
         if (data?.fatal) {
           setSupported(false);
           hls.destroy();

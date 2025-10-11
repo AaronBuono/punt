@@ -1,6 +1,6 @@
 "use client";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import Hls, { ErrorData } from "hls.js";
+import Hls from "hls.js";
 
 interface StreamPlayerProps {
   playbackUrl?: string | null;
@@ -24,7 +24,7 @@ export function StreamPlayer({ playbackUrl, poster, autoPlay = true, children }:
       const hls = new Hls({ enableWorker: true });
       hls.loadSource(playbackUrl);
       hls.attachMedia(video);
-      hls.on(Hls.Events.ERROR, (_evt: string, data: ErrorData) => {
+      hls.on(Hls.Events.ERROR, (_evt: string, data: any) => {
         if (data?.fatal) {
           setSupported(false);
           hls.destroy();

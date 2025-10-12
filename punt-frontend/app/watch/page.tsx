@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { ChevronsUpDown } from "lucide-react";
 import {
@@ -52,6 +52,7 @@ export default function WatchPage() {
   const [selectedAuthority, setSelectedAuthority] = useState<PublicKey | null>(null);
   const [mounted, setMounted] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [solPriceUsd, setSolPriceUsd] = useState<number | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -119,17 +120,39 @@ export default function WatchPage() {
   }, [fetchBalance]);
 
   useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        const price = json?.solana?.usd;
+        if (!cancelled && typeof price === 'number' && Number.isFinite(price)) {
+          setSolPriceUsd(price);
+        }
+      } catch {/* ignore network issues */}
+    };
+    load();
+    const id = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  useEffect(() => {
     const handler = () => fetchBalance();
     window.addEventListener('refresh-balance', handler);
     return () => window.removeEventListener('refresh-balance', handler);
   }, [fetchBalance]);
 
   const maxStake = Number.isFinite(walletBalance) && walletBalance > 0 ? walletBalance : 0;
-  const sliderValue = (() => {
+  const sliderValue = useMemo(() => {
     const parsed = parseFloat(betAmount);
-    if (!Number.isFinite(parsed) || parsed < 0) return 0;
-    return Math.min(parsed, maxStake);
-  })();
+    if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+    const usableMax = Math.max(maxStake, 0.01);
+    const rangeMin = 0.001;
+    const clamp = Math.min(Math.max(parsed, rangeMin), usableMax);
+    const ratio = usableMax === rangeMin ? 1 : Math.log10(clamp / rangeMin) / Math.log10(usableMax / rangeMin);
+    return Math.round(ratio * 1000);
+  }, [betAmount, maxStake]);
 
   // Broadcast overlay updates to the StreamPlayer consumer
   // - Computes YES/NO percentages from the current market pools
@@ -278,6 +301,10 @@ export default function WatchPage() {
   const labelUnder = market?.labelNo || 'UNDER';
   const quickStakePresets = ['0.001', '0.005', '0.01'];
   const betActionLabel = ticket ? 'Add To Position' : `Confirm ${sideChoice === 0 ? labelOver : labelUnder}`;
+  const betAmountNumber = parseFloat(betAmount || '0');
+  const usdEstimate = solPriceUsd !== null && Number.isFinite(betAmountNumber)
+    ? Math.max(0, betAmountNumber) * solPriceUsd
+    : null;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -452,20 +479,25 @@ export default function WatchPage() {
                           <input
                             type="range"
                             min={0}
-                            max={maxStake || 0}
-                            step={0.001}
+                            max={1000}
+                            step={1}
                             value={sliderValue}
                             onChange={e => {
-                              const next = parseFloat(e.target.value);
-                              if (!Number.isFinite(next)) return;
-                              setBetAmount(next.toFixed(3));
+                              const raw = parseFloat(e.target.value);
+                              if (!Number.isFinite(raw)) return;
+                              const usableMax = Math.max(maxStake, 0.01);
+                              const rangeMin = 0.001;
+                              const progress = Math.min(Math.max(raw / 1000, 0), 1);
+                              const nextAmount = rangeMin * Math.pow(usableMax / rangeMin, progress);
+                              const clamped = Math.min(nextAmount, usableMax);
+                              setBetAmount(clamped.toFixed(3));
                             }}
                             disabled={!connected || maxStake === 0 || !!actionLoading}
                             className="w-full accent-[var(--accent)] disabled:opacity-40"
                           />
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="relative flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1 min-w-[118px]">
                             <input
                               type="number"
                               inputMode="decimal"
@@ -475,9 +507,12 @@ export default function WatchPage() {
                               value={betAmount}
                               onChange={e => setBetAmount(e.target.value)}
                               disabled={!!actionLoading}
-                              className="w-full rounded-md border border-white/10 bg-black/40 px-3 pr-12 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 disabled:opacity-60"
+                              className="w-full rounded-md border border-white/10 bg-black/40 pl-3 pr-7 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 disabled:opacity-60"
                             />
-                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs uppercase tracking-[0.25em] text-white/50">SOL</span>
+                            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-sm font-semibold text-white">SOL</span>
+                          </div>
+                          <div className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-[11px] text-white/75 w-[108px] text-center whitespace-nowrap flex items-center justify-center h-[38px]">
+                            {usdEstimate !== null ? `~ $${usdEstimate.toFixed(2)} USD` : '~ $— USD'}
                           </div>
                         </div>
                         <div className="flex gap-2 overflow-x-auto">

@@ -4,15 +4,15 @@ CREATE TABLE "Stream" (
   "livepeerId" TEXT NOT NULL,
   "playbackId" TEXT NOT NULL,
   "streamKey" TEXT NOT NULL,
-  "isActive" INTEGER NOT NULL DEFAULT 0,
+  "isActive" BOOLEAN NOT NULL DEFAULT FALSE,
   "viewerCount" INTEGER NOT NULL DEFAULT 0,
-  "manuallyStopped" INTEGER NOT NULL DEFAULT 0,
-  "startedAt" DATETIME,
-  "endedAt" DATETIME,
-  "lastFetched" DATETIME,
-  "lastMetricsFetched" DATETIME,
-  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  "manuallyStopped" BOOLEAN NOT NULL DEFAULT FALSE,
+  "startedAt" TIMESTAMPTZ,
+  "endedAt" TIMESTAMPTZ,
+  "lastFetched" TIMESTAMPTZ,
+  "lastMetricsFetched" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateIndex

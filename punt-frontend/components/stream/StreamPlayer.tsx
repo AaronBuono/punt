@@ -2,6 +2,10 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 
+type HlsErrorPayload = {
+  fatal?: boolean;
+};
+
 interface StreamPlayerProps {
   playbackUrl?: string | null;
   poster?: string;

@@ -1,6 +1,6 @@
 # Punt Frontend
 
-This project is a Next.js UI for the `stream_bets_program` Anchor on-chain prediction market (sequential cycle-based markets per authority) with custom naming and simplified betting UX. The product name is now **Punt** (formerly a temporary placeholder "Stream Bets").
+This project is a Next.js UI for the `punt_program` Anchor on-chain prediction market (sequential cycle-based markets per authority) with custom naming and simplified betting UX. The product name is now **Punt** (formerly a temporary placeholder "Stream Bets").
 
 ## Quick Start
 
@@ -91,7 +91,7 @@ A tiny surplus (<= 10 lamports) is auto-swept as fees split proportionally befor
 ## Frontend Structure
 - `app/page.tsx` – main UI with authority selection, market panel, bet panel.
 - `lib/solana.ts` – Anchor program helpers, PDA derivation, unified `bet` helper, decoding logic (title/labels).
-- `idl/stream_bets_program.ts` – Static IDL snapshot matching on-chain build.
+- `idl/punt_program.ts` – Static IDL snapshot matching on-chain build.
 - `components/*` – layout, wallet integration, toast notifications.
 
 ## Key Helpers (Cycle-Aware)

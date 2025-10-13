@@ -38,6 +38,7 @@ pub mod stream_bets_program {
         market.pool_yes = 0;
         market.pool_no = 0;
         market.resolved = false;
+        market.frozen = false;
     market.fee_bps = fee_bps.unwrap_or(AUTHORITY_FEE_BPS_DEFAULT);
     market.host_fee_bps = HOST_FEE_BPS_DEFAULT;
     require!(market.fee_bps <= 10_000, BetError::InvalidFee);
@@ -79,6 +80,7 @@ pub mod stream_bets_program {
         require!(amount > 0, BetError::ZeroAmount);
         let market = &mut ctx.accounts.market;
         require!(!market.resolved, BetError::MarketAlreadyResolved);
+        require!(!market.frozen, BetError::MarketFrozen);
         let ticket = &mut ctx.accounts.ticket;
         require!(!ticket.claimed, BetError::AlreadyClaimed);
         require!(ctx.accounts.user.key() != market.authority, BetError::AuthorityCannotBet);
@@ -108,6 +110,7 @@ pub mod stream_bets_program {
         require!(winning_side <= 1, BetError::InvalidWinningSide);
         let market = &mut ctx.accounts.market;
         require!(!market.resolved, BetError::MarketAlreadyResolved);
+        require!(market.frozen, BetError::MarketNotFrozen);
         market.resolved = true;
         market.winning_side = winning_side;
         // If selected winning side has zero bets, convert entire opposing pool to fees immediately.
@@ -269,6 +272,15 @@ pub mod stream_bets_program {
         require!(market.to_account_info().lamports() == rent_min, BetError::OutstandingLamports);
         Ok(())
     }
+
+    /// Freeze the market to stop further betting prior to resolution.
+    pub fn freeze_market(ctx: Context<FreezeMarket>) -> Result<()> {
+        let market = &mut ctx.accounts.market;
+        require!(!market.resolved, BetError::MarketAlreadyResolved);
+        require!(!market.frozen, BetError::MarketAlreadyFrozen);
+        market.frozen = true;
+        Ok(())
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -309,6 +321,7 @@ pub struct BetMarket {
     pub pool_yes: u64,
     pub pool_no: u64,
     pub resolved: bool,
+    pub frozen: bool,
     pub fee_bps: u16,       // authority bps
     pub host_fee_bps: u16,  // host bps
     pub bump: u8,
@@ -318,8 +331,8 @@ pub struct BetMarket {
     pub label_yes: [u8; LABEL_MAX_LEN], // label for side 0
     pub label_no: [u8; LABEL_MAX_LEN],  // label for side 1
 }
-// SIZE (without discriminator): previous 191 + 2 (cycle) = 193
-impl BetMarket { pub const SIZE: usize = 32 + 2 + 8 + 8 + 1 + 2 + 2 + 1 + 1 + 8 + 64 + 32 + 32; }
+// SIZE (without discriminator): previous 193 + 1 (frozen) = 194
+impl BetMarket { pub const SIZE: usize = 32 + 2 + 8 + 8 + 1 + 1 + 2 + 2 + 1 + 1 + 8 + 64 + 32 + 32; }
 
 #[account]
 pub struct BetTicket {
@@ -377,6 +390,7 @@ pub struct PlaceBet<'info> {
     pub ticket: Account<'info, BetTicket>,
     pub system_program: Program<'info, System>,
 }
+
 
 
 #[derive(Accounts)]
@@ -488,6 +502,19 @@ pub struct CloseTicket<'info> {
     pub ticket: Account<'info, BetTicket>,
 }
 
+#[derive(Accounts)]
+pub struct FreezeMarket<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"market", authority.key().as_ref(), &market.cycle.to_le_bytes()],
+        bump = market.bump,
+        has_one = authority,
+    )]
+    pub market: Account<'info, BetMarket>,
+}
+
 // Phase 1 excludes resolve/claim/withdraw; will be added in next phase.
 
 // -------------------------------------------------------------------------------------------------
@@ -512,6 +539,9 @@ pub enum BetError {
     #[msg("Cannot close active ticket")] CannotCloseActiveTicket,
     #[msg("Authority cannot bet on own market")] AuthorityCannotBet,
     #[msg("Label or title too long")] LabelTooLong,
+    #[msg("Market is frozen")] MarketFrozen,
+    #[msg("Market not frozen")] MarketNotFrozen,
+    #[msg("Market already frozen")] MarketAlreadyFrozen,
 }
 
 #[derive(Accounts)]

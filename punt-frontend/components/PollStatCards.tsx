@@ -13,6 +13,7 @@ import {
 
 export interface MarketLike {
   resolved: boolean;
+  frozen: boolean;
   winningSide: number; // 255 for unset, 0 yes, 1 no
   labelYes?: string | null;
   labelNo?: string | null;
@@ -41,9 +42,9 @@ export function PollStatCards({ market }: { market: MarketLike }) {
 
   const cards = [
     {
-      icon: <CircleDot className={`w-4 h-4 ${market.resolved ? 'text-zinc-400' : 'text-[color:var(--accent)]'}`} />,
+      icon: <CircleDot className={`w-4 h-4 ${market.resolved ? 'text-zinc-400' : market.frozen ? 'text-amber-300' : 'text-[color:var(--accent)]'}`} />,
       label: 'Status',
-      value: market.resolved ? 'Closed' : 'Live',
+      value: market.resolved ? 'Closed' : market.frozen ? 'Frozen' : 'Live',
     },
     {
       icon: <Flag className="w-4 h-4 text-white/70" />,

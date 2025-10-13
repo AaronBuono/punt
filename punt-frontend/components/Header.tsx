@@ -23,8 +23,8 @@ export function Header() {
             <span>Browse</span>
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-amber-400 transition-all group-hover:w-full" />
           </Link>
-          <Link href="#" className="relative hover:text-white transition">
-            <span>Leaderboard</span>
+          <Link href="/buy" className="relative hover:text-white transition">
+            <span>Buy</span>
           </Link>
           <Link href="#" className="relative hover:text-white transition">
             <span>Clips</span>

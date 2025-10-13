@@ -5,6 +5,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useToast } from "@/components/ToastProvider";
 import {
   initializeMarket,
+  freezeMarket,
   resolveMarket,
   withdrawFees,
   closeMarket,
@@ -42,11 +43,14 @@ export default function StudioPage() {
 
   const refresh = useCallback(async () => {
     try {
-      if (!publicKey) { setMarket(null); return; }
+      if (!publicKey) { setMarket(null); return null; }
       const m = await fetchMarket(wallet, undefined);
-      setMarket(m?.data || null);
+      const next = m?.data || null;
+      setMarket(next);
+      return next;
     } catch (e) {
       console.error(e);
+      return null;
     }
   }, [publicKey, wallet]);
 
@@ -54,8 +58,15 @@ export default function StudioPage() {
 
   type TxResult = { txSig?: string } | void;
   const hasSig = (v: unknown): v is { txSig: string } => !!v && typeof v === 'object' && 'txSig' in v && typeof (v as { txSig: unknown }).txSig === 'string';
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const fingerprint = (m: ParsedBetMarket | null) => {
+    if (!m) return 'null';
+    return [m.cycle, m.poolYes, m.poolNo, Number(m.resolved), Number(m.frozen), m.feesAccrued, m.winningSide].join(':');
+  };
+
   const run = async <T extends TxResult>(label: string, fn: () => Promise<T>) => {
     let succeeded = false;
+    const beforeFinger = fingerprint(market);
     try {
       setError(null);
       setActionLoading(label);
@@ -68,6 +79,7 @@ export default function StudioPage() {
             const auth = publicKey.toBase58();
             const sysMsgMap: Record<string,string> = {
               init: '🟢 Poll created by host',
+              freeze: '🧊 Poll frozen by host',
               resolve_yes: '🏁 Result set: YES wins',
               resolve_no: '🏁 Result set: NO wins',
               withdraw: '📤 Host fees withdrawn',
@@ -80,7 +92,6 @@ export default function StudioPage() {
         } catch {/* ignore */}
       }
       succeeded = true;
-      await refresh();
     } catch (e) {
       const err = e as Error;
       setError(err.message);
@@ -88,8 +99,19 @@ export default function StudioPage() {
     } finally {
       setActionLoading(null);
     }
+
+    if (succeeded) {
+      const maxAttempts = 8;
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const current = await refresh();
+        if (fingerprint(current ?? null) !== beforeFinger) break;
+        await sleep(400 + attempt * 150);
+      }
+    }
+
     return succeeded;
   };
+ 
 
   const shareUrl = useMemo(() => {
     if (!publicKey) return "";
@@ -203,7 +225,11 @@ export default function StudioPage() {
           <section className="panel p-5 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="card-header">Live Poll</h2>
-              {market && !market.resolved && <span className="text-[10px] text-emerald-400 font-semibold">LIVE</span>}
+              {market && !market.resolved && (
+                <span className={`text-[10px] font-semibold ${market.frozen ? 'text-amber-300' : 'text-emerald-400'}`}>
+                  {market.frozen ? 'FROZEN' : 'LIVE'}
+                </span>
+              )}
             </div>
             {market ? (
               <div className="space-y-4">
@@ -221,8 +247,25 @@ export default function StudioPage() {
                 <div className="flex flex-wrap gap-2 pt-2">
                   {!market.resolved && (
                     <>
-                      <button disabled={actionLoading==='resolve_yes'} onClick={() => run('resolve_yes', () => resolveMarket(wallet, 0))} className="btn btn-sm btn-success">{actionLoading==='resolve_yes'?'...':`Set: ${market.labelYes || 'YES'}`}</button>
-                      <button disabled={actionLoading==='resolve_no'} onClick={() => run('resolve_no', () => resolveMarket(wallet, 1))} className="btn btn-sm btn-danger">{actionLoading==='resolve_no'?'...':`Set: ${market.labelNo || 'NO'}`}</button>
+                      {!market.frozen && (
+                        <p className="w-full text-[11px] text-white/70 bg-white/5 border border-white/10 rounded-md px-3 py-2">
+                          Freeze the poll to lock in wagers before selecting a result.
+                        </p>
+                      )}
+                      {market.frozen && (
+                        <p className="w-full text-[11px] text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/40 rounded-md px-3 py-2">
+                          Poll frozen. Set the winning option when ready.
+                        </p>
+                      )}
+                      <button
+                        disabled={market.frozen || actionLoading==='freeze'}
+                        onClick={() => run('freeze', () => freezeMarket(wallet))}
+                        className="btn btn-sm btn-warning"
+                      >
+                        {actionLoading==='freeze' ? '...' : 'Freeze Poll'}
+                      </button>
+                      <button disabled={!market.frozen || !!actionLoading} onClick={() => run('resolve_yes', () => resolveMarket(wallet, 0))} className="btn btn-sm btn-success">{actionLoading==='resolve_yes'?"...":`Set: ${market.labelYes || 'YES'}`}</button>
+                      <button disabled={!market.frozen || !!actionLoading} onClick={() => run('resolve_no', () => resolveMarket(wallet, 1))} className="btn btn-sm btn-danger">{actionLoading==='resolve_no'?"...":`Set: ${market.labelNo || 'NO'}`}</button>
                     </>
                   )}
                   {market.feesAccrued > 0 && (

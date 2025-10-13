@@ -1,10 +1,10 @@
 // Cycle-aware IDL (includes AuthorityMeta + cycle field in BetMarket + new init_authority_meta instruction)
-// Keep in sync with on-chain target/idl/stream_bets_program.json
-export const STREAM_BETS_PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID!;
+// Keep in sync with on-chain target/idl/punt_program.json
+export const PUNT_PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID!;
 
-export const STREAM_BETS_PROGRAM_IDL = {
+export const PUNT_PROGRAM_IDL = {
   "address": "Cf83CfNFqArAjvQVqpegyuJBjp546jaMKhQA7NGb1zWY",
-  "metadata": {"name": "stream_bets_program", "version": "0.1.0", "spec": "0.1.0", "description": "Created with Anchor"},
+  "metadata": {"name": "punt_program", "version": "0.1.0", "spec": "0.1.0", "description": "Created with Anchor"},
   "instructions": [
     {"name": "claim_winnings","docs": ["Claim winnings for a resolved market. Losers get nothing; winners proportionally."],"discriminator": [161,215,24,59,14,236,242,221],"accounts": [
       {"name": "user","writable": true,"signer": true,"relations": ["ticket"]},
@@ -95,6 +95,14 @@ export const STREAM_BETS_PROGRAM_IDL = {
       ]}},
       {"name": "system_program","address": "11111111111111111111111111111111"}
     ],"args": [{"name": "amount","type": "u64"}]},
+    {"name": "freeze_market","docs": ["Freeze the market to stop further betting prior to resolution."],"discriminator": [184,154,237,98,127,82,217,180],"accounts": [
+      {"name": "authority","writable": true,"signer": true,"relations": ["market"]},
+      {"name": "market","writable": true,"pda": {"seeds": [
+        {"kind": "const","value": [109,97,114,107,101,116]},
+        {"kind": "account","path": "authority"},
+        {"kind": "account","path": "market.cycle","account": "BetMarket"}
+      ]}}
+    ],"args": []},
     {"name": "resolve_market","docs": ["Resolve the market selecting a winning side (0=yes,1=no). Only authority."],"discriminator": [155,23,80,173,46,74,23,239],"accounts": [
       {"name": "authority","writable": true,"signer": true,"relations": ["market"]},
       {"name": "market","writable": true,"pda": {"seeds": [
@@ -138,7 +146,10 @@ export const STREAM_BETS_PROGRAM_IDL = {
     {"code": 6013,"name": "OutstandingLamports","msg": "Outstanding lamports remain"},
     {"code": 6014,"name": "CannotCloseActiveTicket","msg": "Cannot close active ticket"},
     {"code": 6015,"name": "AuthorityCannotBet","msg": "Authority cannot bet on own market"},
-    {"code": 6016,"name": "LabelTooLong","msg": "Label or title too long"}
+    {"code": 6016,"name": "LabelTooLong","msg": "Label or title too long"},
+    {"code": 6017,"name": "MarketFrozen","msg": "Market is frozen"},
+    {"code": 6018,"name": "MarketNotFrozen","msg": "Market not frozen"},
+    {"code": 6019,"name": "MarketAlreadyFrozen","msg": "Market already frozen"}
   ],
   "types": [
     {"name": "AuthorityMeta","type": {"kind": "struct","fields": [
@@ -152,6 +163,7 @@ export const STREAM_BETS_PROGRAM_IDL = {
       {"name": "pool_yes","type": "u64"},
       {"name": "pool_no","type": "u64"},
       {"name": "resolved","type": "bool"},
+  {"name": "frozen","type": "bool"},
       {"name": "fee_bps","type": "u16"},
       {"name": "host_fee_bps","type": "u16"},
       {"name": "bump","type": "u8"},
@@ -181,4 +193,4 @@ export const STREAM_BETS_PROGRAM_IDL = {
   ]
 } as const;
 
-export type StreamBetsProgram = typeof STREAM_BETS_PROGRAM_IDL;
+export type PuntProgram = typeof PUNT_PROGRAM_IDL;

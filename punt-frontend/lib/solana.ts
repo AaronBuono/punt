@@ -2,7 +2,7 @@ import { Connection, PublicKey, SystemProgram, Transaction, clusterApiUrl, Compu
 import bs58 from "bs58";
 import { Program, AnchorProvider, BN, type Provider, type Wallet as AnchorWallet } from "@coral-xyz/anchor";
 import { Keypair } from "@solana/web3.js";
-import { STREAM_BETS_PROGRAM_IDL, STREAM_BETS_PROGRAM_ID } from "@/idl/stream_bets_program";
+import { PUNT_PROGRAM_IDL, PUNT_PROGRAM_ID } from "@/idl/punt_program";
 
 // Host (platform) wallet used on-chain for fee split
 export const HOST_PUBKEY = new PublicKey("9KQjnCXwNcnaojsfvuD894UjnCKvgwEDe4Kt1nfpDNHB");
@@ -219,7 +219,7 @@ export const connection: Connection = ((): Connection => {
   return (_connection as unknown) as Connection; // direct reference; rotated in-place
 })();
 
-export const PROGRAM_ID = new PublicKey(STREAM_BETS_PROGRAM_ID);
+export const PROGRAM_ID = new PublicKey(PUNT_PROGRAM_ID);
 
 // Wallet Adapter types (minimal) so we don't import heavy types all over.
 export interface WalletLike {
@@ -273,7 +273,7 @@ export async function getReadonlyProgram() {
   }
   if (_readonlyProgram) return _readonlyProgram;
   const provider = getReadonlyProvider();
-  const idl = STREAM_BETS_PROGRAM_IDL as unknown as { address?: string; name: string; instructions: unknown[]; accounts?: unknown[] };
+  const idl = PUNT_PROGRAM_IDL as unknown as { address?: string; name: string; instructions: unknown[]; accounts?: unknown[] };
   if (idl.address && idl.address === PROGRAM_ID.toBase58()) {
     _readonlyProgram = new Program(idl, provider) as Program;
     return _readonlyProgram;
@@ -296,7 +296,7 @@ export async function getProgram(wallet: WalletLike | null) {
   }
   if (_program && _programWallet === current) return _program;
   const provider = getProvider(wallet);
-  const idl = STREAM_BETS_PROGRAM_IDL as unknown as { address?: string; name: string; instructions: unknown[]; accounts?: unknown[] };
+  const idl = PUNT_PROGRAM_IDL as unknown as { address?: string; name: string; instructions: unknown[]; accounts?: unknown[] };
   if (idl.address && idl.address === PROGRAM_ID.toBase58()) {
     _program = new Program(idl, provider as AnchorProvider) as Program;
     _programWallet = current;
@@ -355,7 +355,7 @@ function decodeAnchorError(codeHex: string): string | null {
   try {
     const code = parseInt(codeHex, 16);
     if (Number.isNaN(code)) return null;
-    const idlErrors = (STREAM_BETS_PROGRAM_IDL as unknown as { errors?: ReadonlyArray<{ code: number; msg: string }> }).errors;
+  const idlErrors = (PUNT_PROGRAM_IDL as unknown as { errors?: ReadonlyArray<{ code: number; msg: string }> }).errors;
     if (!Array.isArray(idlErrors)) return null;
     const match = idlErrors.find(e => e.code === code);
     return match?.msg ?? null;
@@ -701,6 +701,19 @@ export async function bet(wallet: WalletLike, params: { side: 0 | 1; amountLampo
   return { txSig: sig, ticket, market, cycle };
 }
 
+export async function freezeMarket(wallet: WalletLike) {
+  const program = await getProgram(wallet);
+  const authority = wallet.publicKey!;
+  const meta = await fetchAuthorityMeta(program, authority);
+  if (!meta || meta.nextCycle === 0) throw new Error('No active market');
+  const cycle = meta.nextCycle - 1;
+  const market = getMarketPda(authority, cycle);
+  const ix = await program.methods.freezeMarket().accounts({ authority, market }).instruction();
+  const tx = new Transaction().add(ix);
+  const txSig = await sendAndConfirmSafe(wallet, tx, 'freezeMarket');
+  return { txSig, cycle };
+}
+
 export async function resolveMarket(wallet: WalletLike, winningSide: 0 | 1) {
   const program = await getProgram(wallet);
   const authority = wallet.publicKey!;
@@ -772,27 +785,13 @@ export async function closeTicket(wallet: WalletLike, marketAuthority?: PublicKe
 }
 
 // Fetch helpers
-export interface RawBetMarket {
-  authority: PublicKey;
-  cycle?: number;
-  poolYes?: BN; pool_yes?: BN;
-  poolNo?: BN; pool_no?: BN;
-  resolved: boolean;
-  feeBps?: number; fee_bps?: number;
-  hostFeeBps?: number; host_fee_bps?: number;
-  bump: number;
-  winningSide?: number; winning_side?: number;
-  feesAccrued?: BN; fees_accrued?: BN;
-  title?: number[] | Uint8Array; // array<u8>
-  labelYes?: number[] | Uint8Array; label_yes?: number[] | Uint8Array;
-  labelNo?: number[] | Uint8Array; label_no?: number[] | Uint8Array;
-}
 export interface ParsedBetMarket {
   authority: string;
   cycle: number;
   poolYes: number;
   poolNo: number;
   resolved: boolean;
+  frozen: boolean;
   feeBps: number;
   hostFeeBps: number;
   bump: number;
@@ -830,7 +829,6 @@ function bytesToStr(arr?: number[] | Uint8Array, trim = true): string {
 
 // Narrowed account namespace typing for decode helpers
 interface AccountNamespace {
-  betMarket: { fetch: (pubkey: PublicKey) => Promise<RawBetMarket> };
   betTicket: { fetch: (pubkey: PublicKey) => Promise<RawBetTicket> };
   authorityMeta?: { fetch: (pubkey: PublicKey) => Promise<RawAuthorityMeta> };
 }
@@ -838,6 +836,54 @@ interface AccountNamespace {
 interface TicketAccountNamespace {
   betTicket: {
     all: (filters?: Array<{ memcmp: { offset: number; bytes: string } }>) => Promise<Array<{ account: { amount: BN | number | bigint } }>>;
+  };
+}
+
+const TITLE_MAX_LEN_BYTES = 64;
+const LABEL_MAX_LEN_BYTES = 32;
+const BET_MARKET_ACCOUNT_LEN_V1 = 8 + 32 + 2 + 8 + 8 + 1 + 2 + 2 + 1 + 1 + 8 + TITLE_MAX_LEN_BYTES + LABEL_MAX_LEN_BYTES + LABEL_MAX_LEN_BYTES;
+const BET_MARKET_ACCOUNT_LEN_V2 = BET_MARKET_ACCOUNT_LEN_V1 + 1;
+
+function parseBetMarketAccount(data: Uint8Array): ParsedBetMarket {
+  const len = data.length;
+  if (len !== BET_MARKET_ACCOUNT_LEN_V1 && len !== BET_MARKET_ACCOUNT_LEN_V2) {
+    throw new Error(`Unsupported BetMarket account length ${len}`);
+  }
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  let offset = 8; // skip discriminator
+  const authority = new PublicKey(data.slice(offset, offset + 32)); offset += 32;
+  const cycle = view.getUint16(offset, true); offset += 2;
+  const poolYes = Number(view.getBigUint64(offset, true)); offset += 8;
+  const poolNo = Number(view.getBigUint64(offset, true)); offset += 8;
+  const resolved = data[offset] === 1; offset += 1;
+  let frozen = false;
+  if (len === BET_MARKET_ACCOUNT_LEN_V2) {
+    frozen = data[offset] === 1;
+    offset += 1;
+  }
+  const feeBps = view.getUint16(offset, true); offset += 2;
+  const hostFeeBps = view.getUint16(offset, true); offset += 2;
+  const bump = data[offset]; offset += 1;
+  const winningSide = data[offset]; offset += 1;
+  const feesAccrued = Number(view.getBigUint64(offset, true)); offset += 8;
+  const titleBytes = data.slice(offset, offset + TITLE_MAX_LEN_BYTES); offset += TITLE_MAX_LEN_BYTES;
+  const labelYesBytes = data.slice(offset, offset + LABEL_MAX_LEN_BYTES); offset += LABEL_MAX_LEN_BYTES;
+  const labelNoBytes = data.slice(offset, offset + LABEL_MAX_LEN_BYTES);
+  return {
+    authority: authority.toBase58(),
+    cycle,
+    poolYes,
+    poolNo,
+    resolved,
+    frozen,
+    feeBps,
+    hostFeeBps,
+    bump,
+    winningSide,
+    feesAccrued,
+    title: bytesToStr(titleBytes),
+    labelYes: bytesToStr(labelYesBytes),
+    labelNo: bytesToStr(labelNoBytes),
   };
 }
 
@@ -849,31 +895,12 @@ export async function fetchMarket(wallet: WalletLike, marketAuthority?: PublicKe
   const cycle = meta.nextCycle - 1;
   const market = getMarketPda(authority, cycle);
   try {
-    const raw = await (program.account as unknown as AccountNamespace).betMarket.fetch(market);
-    const parsed: ParsedBetMarket = {
-      authority: raw.authority.toBase58(),
-      cycle: raw.cycle ?? cycle,
-      poolYes: bnToNumber(raw.poolYes ?? raw.pool_yes),
-      poolNo: bnToNumber(raw.poolNo ?? raw.pool_no),
-      resolved: raw.resolved,
-      feeBps: (raw.feeBps ?? raw.fee_bps) || 0,
-      hostFeeBps: (raw.hostFeeBps ?? raw.host_fee_bps) || 0,
-      bump: raw.bump,
-      winningSide: (raw.winningSide ?? raw.winning_side) ?? 255,
-      feesAccrued: bnToNumber(raw.feesAccrued ?? raw.fees_accrued),
-      title: bytesToStr(raw.title),
-      labelYes: bytesToStr(raw.labelYes ?? raw.label_yes),
-      labelNo: bytesToStr(raw.labelNo ?? raw.label_no),
-    };
+    const info = await program.provider.connection.getAccountInfo(market, { commitment: 'processed' });
+    if (!info?.data) return null;
+    const parsed = parseBetMarketAccount(info.data);
     return { pubkey: market, data: parsed };
   } catch (e) {
-    const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
-    if (msg.includes('account does not exist') || msg.includes('could not find')) return null;
-    if (msg.includes('failed to deserialize') || msg.includes('accountdidnotdeserialize') || msg.includes('3003')) {
-      console.warn('[fetchMarket] Deserialize failed for market PDA', market.toBase58(), '— treat as absent.');
-      return null;
-    }
-    console.warn('[fetchMarket] Unexpected error fetching market', e);
+    console.warn('[fetchMarket] Failed to decode market account', e);
     return null;
   }
 }
@@ -887,26 +914,12 @@ export async function fetchMarketPublic(marketAuthority: PublicKey): Promise<{ p
   const cycle = meta.nextCycle - 1;
   const market = getMarketPda(marketAuthority, cycle);
   try {
-    const raw = await (program.account as unknown as AccountNamespace).betMarket.fetch(market);
-    const parsed: ParsedBetMarket = {
-      authority: raw.authority.toBase58(),
-      cycle: raw.cycle ?? cycle,
-      poolYes: bnToNumber(raw.poolYes ?? raw.pool_yes),
-      poolNo: bnToNumber(raw.poolNo ?? raw.pool_no),
-      resolved: raw.resolved,
-      feeBps: (raw.feeBps ?? raw.fee_bps) || 0,
-      hostFeeBps: (raw.hostFeeBps ?? raw.host_fee_bps) || 0,
-      bump: raw.bump,
-      winningSide: (raw.winningSide ?? raw.winning_side) ?? 255,
-      feesAccrued: bnToNumber(raw.feesAccrued ?? raw.fees_accrued),
-      title: bytesToStr(raw.title),
-      labelYes: bytesToStr(raw.labelYes ?? raw.label_yes),
-      labelNo: bytesToStr(raw.labelNo ?? raw.label_no),
-    };
+    const info = await program.provider.connection.getAccountInfo(market, { commitment: 'processed' });
+    if (!info?.data) return null;
+    const parsed = parseBetMarketAccount(info.data);
     return { pubkey: market, data: parsed };
   } catch (e) {
-    const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
-    if (msg.includes('account does not exist') || msg.includes('could not find')) return null;
+    console.warn('[fetchMarketPublic] Failed to decode market account', e);
     return null;
   }
 }

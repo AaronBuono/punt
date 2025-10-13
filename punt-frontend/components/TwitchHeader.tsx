@@ -1,5 +1,5 @@
 "use client";
-import { Menu, Compass, Trophy, Video } from "lucide-react";
+import { Menu, Compass, ShoppingBag, Video } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,11 +41,11 @@ export function TwitchHeader() {
           <span>Browse</span>
         </Link>
         <Link
-          href="/leaderboard"
+          href="/buy"
           className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 text-sm font-medium transition-colors"
         >
-          <Trophy className="w-4 h-4 opacity-90" />
-          <span>Leaderboard</span>
+          <ShoppingBag className="w-4 h-4 opacity-90" />
+          <span>Buy</span>
         </Link>
         <Link
           href="/apply"

@@ -40,7 +40,7 @@ export function TwitchSidebar({ onSelect }: { onSelect: (authority: string) => v
                   <span className="truncate text-white/90">{short}</span>
                   <span className="text-[10px] text-dim">{s.viewerCount} viewers</span>
                 </div>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[9px] uppercase tracking-wide">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[var(--accent-contrast)] text-[9px] uppercase tracking-wide">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>Live
                 </span>
               </button>

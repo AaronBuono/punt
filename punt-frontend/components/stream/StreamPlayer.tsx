@@ -84,7 +84,7 @@ export function StreamPlayer({ playbackUrl, poster, autoPlay = true, children }:
       <button
         type="button"
         onClick={goLive}
-        className={"absolute top-1.5 left-2 px-2 py-1 text-[10px] font-semibold rounded uppercase tracking-wide flex items-center gap-1 transition-colors bg-[var(--accent)]/80 hover:bg-[var(--accent)]/90 text-white"}
+  className={"absolute top-1.5 left-2 px-2 py-1 text-[10px] font-semibold rounded uppercase tracking-wide flex items-center gap-1 transition-colors bg-[#B91C1C]/85 hover:bg-[#DC2626] text-white"}
         title="Live"
         aria-label="Live"
       >

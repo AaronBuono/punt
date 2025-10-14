@@ -6,8 +6,8 @@
       <stop offset="100%" stop-color="#18181b" />
     </linearGradient>
     <radialGradient id="pulse" cx="50%" cy="45%" r="60%">
-      <stop offset="0%" stop-color="rgba(255,77,90,0.35)" />
-      <stop offset="100%" stop-color="rgba(255,77,90,0)" />
+      <stop offset="0%" stop-color="rgba(255,223,0,0.35)" />
+      <stop offset="100%" stop-color="rgba(255,223,0,0)" />
     </radialGradient>
   </defs>
   <rect width="1280" height="720" fill="url(#g)" />
@@ -19,8 +19,8 @@
     <path d="M695 270h30v180h-30z" />
     <path d="M755 300h30v120h-30z" />
   </g>
-  <circle cx="1180" cy="70" r="18" fill="#f43f5e" />
-  <circle cx="1180" cy="70" r="8" fill="#fecdd3" />
+  <circle cx="1180" cy="70" r="18" fill="#FFDF00" />
+  <circle cx="1180" cy="70" r="8" fill="#FFF6A3" />
   <text x="100" y="640" fill="#f8fafc" fill-opacity="0.85" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="48" font-weight="600">Stream Preview Unavailable</text>
   <text x="100" y="690" fill="#f8fafc" fill-opacity="0.45" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="500">Going live keeps thumbnails fresh.</text>
 </svg>

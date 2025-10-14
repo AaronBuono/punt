@@ -1,6 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
 
+const OVERLAY_ALERT_RED = "#B91C1C";
+
 type PredictionOverlayProps = {
   title: string;
   yesPct: number;
@@ -37,9 +39,9 @@ export function PredictionOverlay({
       className="pointer-events-none absolute top-2 right-2 sm:top-4 sm:right-4 z-0 w-[min(220px,28vw)] max-w-[260px]"
     >
       <div className="relative flex flex-col rounded-2xl border border-white/8 bg-black/20 backdrop-blur-xl shadow-md text-white/90 overflow-hidden">
-        <div className="px-4 pt-3 pb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] font-semibold text-white/75">
+        <div className="px-4 pt-3 pb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] font-semibold text-white/75">
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
+            <span className="w-2 h-2 rounded-full" style={{ background: OVERLAY_ALERT_RED }} />
             Live Prediction
           </span>
           {typeof secondsLeft === "number" && (
@@ -64,7 +66,7 @@ export function PredictionOverlay({
               className="progress-segment"
               style={{
                 width: `${clampedNo}%`,
-                background: "linear-gradient(90deg,rgba(239,68,68,0.88),rgba(255,77,90,0.48))",
+                background: "linear-gradient(90deg,rgba(185,28,28,0.9),rgba(239,68,68,0.55))",
               }}
             />
           </div>
@@ -76,7 +78,7 @@ export function PredictionOverlay({
             </span>
             <span className="flex items-center justify-between">
               <span className="text-white/70">{noLabel}</span>
-              <span className="text-[color:var(--accent)]">{clampedNo.toFixed(1)}%</span>
+              <span className="text-[#B91C1C]">{clampedNo.toFixed(1)}%</span>
             </span>
           </div>
 

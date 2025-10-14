@@ -33,7 +33,7 @@ export default function LivePage() {
                   </div>
                   <Link href={{ pathname: '/watch', query: { authority: s.authority } }} className="btn btn-sm">Watch</Link>
                 </div>
-                <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[9px] uppercase tracking-wide"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>Live</span>
+                <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[var(--accent-contrast)] text-[9px] uppercase tracking-wide"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>Live</span>
               </div>
             );
           })}

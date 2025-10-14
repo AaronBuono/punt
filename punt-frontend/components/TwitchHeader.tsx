@@ -9,7 +9,7 @@ import { WalletBalance } from "./WalletBalance";
 // Wallet button SSR-safe
 const WalletMultiButton = dynamic(
   async () => (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
-  { ssr: false, loading: () => <button className="!rounded-md !bg-[var(--accent)] !text-white text-xs px-3 py-1 opacity-60" disabled>Wallet</button> }
+  { ssr: false, loading: () => <button className="!rounded-md !bg-[var(--accent)] !text-[var(--accent-contrast)] text-xs px-3 py-1 opacity-60" disabled>Wallet</button> }
 );
 
 export function TwitchHeader() {
@@ -67,7 +67,7 @@ export function TwitchHeader() {
         {/* Wallet balance */}
         <WalletBalance />
         {/* Wallet */}
-        <WalletMultiButton className="!rounded-md !px-3 !py-2 !h-auto !bg-[var(--accent)] hover:!brightness-110 !text-white !text-xs !font-medium !border !border-white/10 !shadow" />
+  <WalletMultiButton className="!rounded-md !px-3 !py-2 !h-auto !bg-[var(--accent)] hover:!brightness-110 !text-[var(--accent-contrast)] !text-xs !font-medium !border !border-white/10 !shadow" />
       </div>
     </motion.header>
   );

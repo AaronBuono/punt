@@ -77,7 +77,7 @@ export function ChatPanel({ authority }: { authority: string }) {
           disabled={!publicKey}
           className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-2 text-[11px] focus:outline-none focus:ring-2 focus:[--tw-ring-color:color-mix(in_oklab,var(--accent)_40%,transparent)] disabled:opacity-40"
         />
-        <button onClick={send} disabled={!publicKey || !input.trim()} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white border-transparent disabled:opacity-50">Send</button>
+  <button onClick={send} disabled={!publicKey || !input.trim()} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--accent-contrast)] border-transparent disabled:opacity-50">Send</button>
       </div>
     </div>
   );

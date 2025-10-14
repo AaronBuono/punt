@@ -27,6 +27,31 @@ import { ChatPanel } from "@/components/stream/ChatPanel";
 import { PollSummaryBar } from "@/components/PollSummaryBar";
 import { PredictionOverlay } from "@/components/stream/PredictionOverlay";
 
+const PYTH_PRICE_FEEDS = {
+  SOL_USD: "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+  EUR_USD: "a995d00bb36a63cef7fd2c287dc105fc8f3d93779f062f09551b0af3e81ec30b",
+  GBP_USD: "84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1",
+  AUD_USD: "67a6f93030420c1c9e3fe37c1ab6b77966af82f995944a9fefce357a22854a80",
+  USD_JPY: "ef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52",
+  USD_CAD: "3112b03a41c910ed446852aacf67118cb1bec67b2cd0b9a214c58cc0eaa2ecca",
+} as const;
+
+const CURRENCY_CONFIG = [
+  { code: "USD", label: "USD", locale: "en-US", currency: "USD", maximumFractionDigits: 2 },
+  { code: "EUR", label: "EUR", locale: "en-GB", currency: "EUR", maximumFractionDigits: 2 },
+  { code: "GBP", label: "GBP", locale: "en-GB", currency: "GBP", maximumFractionDigits: 2 },
+  { code: "AUD", label: "AUD", locale: "en-AU", currency: "AUD", maximumFractionDigits: 2 },
+  { code: "CAD", label: "CAD", locale: "en-CA", currency: "CAD", maximumFractionDigits: 2 },
+  { code: "JPY", label: "JPY", locale: "ja-JP", currency: "JPY", maximumFractionDigits: 0 },
+] as const;
+
+type SupportedCurrency = (typeof CURRENCY_CONFIG)[number]["code"];
+
+type FeedPrice = {
+  price: number;
+  publishTime: number | null;
+};
+
 type PredictionOverlayDetail = {
   title?: string;
   yesPct?: number;
@@ -53,7 +78,8 @@ export default function WatchPage() {
   const [selectedAuthority, setSelectedAuthority] = useState<PublicKey | null>(null);
   const [mounted, setMounted] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number>(0);
-  const [solPriceUsd, setSolPriceUsd] = useState<number | null>(null);
+  const [pythPrices, setPythPrices] = useState<Record<string, FeedPrice>>({});
+  const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>("USD");
   const [streamMeta, setStreamMeta] = useState<{ active: boolean; viewerCount: number } | null>(null);
   const [betCount, setBetCount] = useState<number | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -129,20 +155,58 @@ export default function WatchPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const feedIds = [
+      PYTH_PRICE_FEEDS.SOL_USD,
+      PYTH_PRICE_FEEDS.EUR_USD,
+      PYTH_PRICE_FEEDS.GBP_USD,
+      PYTH_PRICE_FEEDS.AUD_USD,
+      PYTH_PRICE_FEEDS.USD_JPY,
+      PYTH_PRICE_FEEDS.USD_CAD,
+    ];
+
+    const buildUrl = () => {
+      const params = new URLSearchParams();
+      feedIds.forEach(id => params.append('ids[]', id));
+      params.set('parsed', 'true');
+      params.set('ignore_invalid_price_ids', 'true');
+      return `https://hermes.pyth.network/v2/updates/price/latest?${params.toString()}`;
+    };
+
     const load = async () => {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', { cache: 'no-store' });
+        const res = await fetch(buildUrl(), { cache: 'no-store' });
         if (!res.ok) return;
         const json = await res.json();
-        const price = json?.solana?.usd;
-        if (!cancelled && typeof price === 'number' && Number.isFinite(price)) {
-          setSolPriceUsd(price);
+        const parsed = Array.isArray(json?.parsed) ? json.parsed : [];
+        const next: Record<string, FeedPrice> = {};
+        for (const entry of parsed) {
+          const id = typeof entry?.id === 'string' ? entry.id : null;
+          const priceObj = entry?.price;
+          if (!id || !priceObj) continue;
+          const mantissa = Number(priceObj.price);
+          const expo = typeof priceObj.expo === 'number' ? priceObj.expo : null;
+          if (!Number.isFinite(mantissa) || expo === null) continue;
+          const value = mantissa * Math.pow(10, expo);
+          if (!Number.isFinite(value)) continue;
+          const publishTime = typeof priceObj.publish_time === 'number' ? priceObj.publish_time : null;
+          next[id] = { price: value, publishTime };
         }
-      } catch {/* ignore network issues */}
+        if (next[PYTH_PRICE_FEEDS.SOL_USD] && !cancelled && Object.keys(next).length > 0) {
+          setPythPrices(prev => ({ ...prev, ...next }));
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[watch] failed to load Pyth prices', err);
+        }
+      }
     };
+
     load();
-    const id = setInterval(load, 60_000);
-    return () => { cancelled = true; clearInterval(id); };
+    const id = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
 
   useEffect(() => {
@@ -331,10 +395,75 @@ export default function WatchPage() {
   const labelOver = market?.labelYes || 'OVER';
   const labelUnder = market?.labelNo || 'UNDER';
   const quickStakePresets = ['0.001', '0.005', '0.01'];
+  const yesIdleClasses = 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/60';
+  const yesActiveClasses = 'border-transparent bg-emerald-500 text-gray-900 shadow-[0_0_15px_rgba(34,197,94,0.4)]';
+  const noIdleClasses = 'border-[#b91c1c]/50 bg-[#7f1d1d]/40 text-[#fecaca] hover:bg-[#991b1b]/50 hover:border-[#dc2626]/60';
+  const noActiveClasses = 'border-transparent bg-[#b91c1c] text-white shadow-[0_0_18px_rgba(185,28,28,0.45)]';
   const betActionLabel = ticket ? 'Add To Position' : `Confirm ${sideChoice === 0 ? labelOver : labelUnder}`;
   const betAmountNumber = parseFloat(betAmount || '0');
-  const usdEstimate = solPriceUsd !== null && Number.isFinite(betAmountNumber)
-    ? Math.max(0, betAmountNumber) * solPriceUsd
+  const currencyFormatters = useMemo(() => {
+    const result = {} as Record<SupportedCurrency, Intl.NumberFormat>;
+    CURRENCY_CONFIG.forEach(cfg => {
+      result[cfg.code] = new Intl.NumberFormat(cfg.locale, {
+        style: 'currency',
+        currency: cfg.currency,
+        maximumFractionDigits: cfg.maximumFractionDigits ?? 2,
+      });
+    });
+    return result;
+  }, []);
+
+  const solUsdPrice = pythPrices[PYTH_PRICE_FEEDS.SOL_USD]?.price ?? null;
+  const currencyRates = useMemo(() => {
+    const base: Record<SupportedCurrency, number | null> = {
+      USD: null,
+      EUR: null,
+      GBP: null,
+      AUD: null,
+      CAD: null,
+      JPY: null,
+    };
+
+    if (solUsdPrice === null || !Number.isFinite(solUsdPrice)) {
+      return base;
+    }
+
+    base.USD = solUsdPrice;
+
+    const eurUsd = pythPrices[PYTH_PRICE_FEEDS.EUR_USD]?.price ?? null;
+    if (eurUsd && Number.isFinite(eurUsd)) {
+      base.EUR = solUsdPrice / eurUsd;
+    }
+
+    const gbpUsd = pythPrices[PYTH_PRICE_FEEDS.GBP_USD]?.price ?? null;
+    if (gbpUsd && Number.isFinite(gbpUsd)) {
+      base.GBP = solUsdPrice / gbpUsd;
+    }
+
+    const audUsd = pythPrices[PYTH_PRICE_FEEDS.AUD_USD]?.price ?? null;
+    if (audUsd && Number.isFinite(audUsd)) {
+      base.AUD = solUsdPrice / audUsd;
+    }
+
+    const usdJpy = pythPrices[PYTH_PRICE_FEEDS.USD_JPY]?.price ?? null;
+    if (usdJpy && Number.isFinite(usdJpy)) {
+      base.JPY = solUsdPrice * usdJpy;
+    }
+
+    const usdCad = pythPrices[PYTH_PRICE_FEEDS.USD_CAD]?.price ?? null;
+    if (usdCad && Number.isFinite(usdCad)) {
+      base.CAD = solUsdPrice * usdCad;
+    }
+
+    return base;
+  }, [solUsdPrice, pythPrices]);
+
+  const selectedCurrencyRate = currencyRates[selectedCurrency];
+  const betEstimate = selectedCurrencyRate !== null && Number.isFinite(betAmountNumber)
+    ? Math.max(0, betAmountNumber) * selectedCurrencyRate
+    : null;
+  const formattedEstimate = betEstimate !== null
+    ? currencyFormatters[selectedCurrency].format(betEstimate)
     : null;
   const poolYesLamports = market?.poolYes ?? 0;
   const poolNoLamports = market?.poolNo ?? 0;
@@ -421,17 +550,17 @@ export default function WatchPage() {
   }
 
   return (
-    <main className={`relative w-full py-6 px-4 sm:px-6 xl:px-8 flex flex-col gap-6 max-w-7xl mx-auto`}>
+    <main className={`relative w-full py-6 px-4 sm:px-6 xl:px-8 flex flex-col gap-6 max-w-[1500px] mx-auto`}>
 
       {!selectedAuthority && (
         <div className="panel p-5 text-sm text-dim">No stream selected. Go to the home page and choose a stream.</div>
       )}
 
-      <div className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 lg:col-span-9 flex flex-col gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,1.05fr)] gap-4 items-start">
+  <div className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start lg:h-fit">
           {selectedAuthority && (
-            <div className="panel p-0 overflow-hidden">
-              <div className="aspect-video bg-black">
+            <div className="panel p-0 overflow-hidden lg:shadow-2xl">
+              <div className="relative w-full bg-black aspect-video lg:min-h-[460px]">
                 <ViewerStream authority={selectedAuthority.toBase58()} onMeta={setStreamMeta} />
               </div>
               <div className="border-t border-white/10 px-4 py-3 space-y-4">
@@ -460,8 +589,8 @@ export default function WatchPage() {
               </div>
             </div>
           )}
-        </div>
-  <div className="col-span-12 lg:col-span-3 flex flex-col gap-4">
+  </div>
+  <div className="flex flex-col gap-4">
           <section className={`panel p-5 space-y-5 relative ${lockAny ? 'opacity-60' : ''}`}>
             {lockAny && (
               <div className="absolute inset-0 z-10 rounded-[inherit] bg-black/30 backdrop-blur-[2px] flex items-center justify-center">
@@ -492,9 +621,9 @@ export default function WatchPage() {
                 <div className="h-9 rounded-md bg-white/5" />
               </div>
             ) : market ? (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="space-y-3">
-                  <div className="rounded-lg border border-white/10 bg-black/30 p-4 space-y-3">
+                  <div className="rounded-lg border border-white/10 bg-black/30 p-4 space-y-3" style={{ minWidth: 0 }}>
                     <div className="flex items-center justify-between text-xs text-white/60">
                       <span>Total Pot</span>
                       <span className="font-semibold text-white">{totalPoolSol > 0 ? `${totalPoolSol.toFixed(2)} SOL` : '—'}</span>
@@ -545,16 +674,16 @@ export default function WatchPage() {
                           Poll frozen. Select the winning side below.
                         </div>
                       )}
-                      <button type="button" disabled={!market.frozen || !!actionLoading} onClick={() => run('resolve_yes', () => resolveMarket(wallet, 0))} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white border-transparent">
+                      <button type="button" disabled={!market.frozen || !!actionLoading} onClick={() => run('resolve_yes', () => resolveMarket(wallet, 0))} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--accent-contrast)] border-transparent">
                         {actionLoading === 'resolve_yes' ? '...' : `Set: ${market.labelYes || 'YES'}`}
                       </button>
-                      <button type="button" disabled={!market.frozen || !!actionLoading} onClick={() => run('resolve_no', () => resolveMarket(wallet, 1))} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white border-transparent">
+                      <button type="button" disabled={!market.frozen || !!actionLoading} onClick={() => run('resolve_no', () => resolveMarket(wallet, 1))} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--accent-contrast)] border-transparent">
                         {actionLoading === 'resolve_no' ? '...' : `Set: ${market.labelNo || 'NO'}`}
                       </button>
                     </>
                   )}
                   {userIsAuthority && market.feesAccrued > 0 && (
-                    <button type="button" disabled={!!actionLoading} onClick={() => run('withdraw', () => withdrawFees(wallet))} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white border-transparent">
+                    <button type="button" disabled={!!actionLoading} onClick={() => run('withdraw', () => withdrawFees(wallet))} className="btn btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--accent-contrast)] border-transparent">
                       {actionLoading ? '...' : 'Collect Host Fees'}
                     </button>
                   )}
@@ -599,7 +728,7 @@ export default function WatchPage() {
                 )}
 
                 {!userIsAuthority && !market.resolved && (
-                  <div className="space-y-4 border-t border-white/5 pt-4">
+                  <div className="space-y-3 border-t border-white/10 pt-3">
                     {market.frozen && (
                       <div className="rounded-md border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
                         Poll frozen. Betting is closed.
@@ -610,15 +739,17 @@ export default function WatchPage() {
                         const chosen = sideChoice === option;
                         const disabled = !!actionLoading || market.frozen || (!!ticket && ticket.side !== option);
                         const label = option === 0 ? labelOver : labelUnder;
+                        const palette = option === 0
+                          ? (chosen ? yesActiveClasses : yesIdleClasses)
+                          : (chosen ? noActiveClasses : noIdleClasses);
+                        const baseChoiceClasses = 'rounded-md px-3 py-2 text-sm font-semibold transition border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20';
                         return (
                           <button
                             key={option}
                             type="button"
                             onClick={() => setSideChoice(option as 0 | 1)}
                             disabled={disabled}
-                            className={`rounded-md border border-white/10 px-3 py-2 text-sm font-semibold transition ${
-                              chosen ? 'bg-[var(--accent)] text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'
-                            } ${disabled && !chosen ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`${baseChoiceClasses} ${palette} ${disabled && !chosen ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             {label}
                           </button>
@@ -629,7 +760,11 @@ export default function WatchPage() {
                       type="button"
                       onClick={() => setBetDrawerOpen(open => !open)}
                       disabled={!!actionLoading || market.frozen}
-                      className="w-full rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent)]/90 disabled:opacity-60"
+                      className={`w-full rounded-md px-3 py-2 text-sm font-semibold transition border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:opacity-60 disabled:cursor-not-allowed ${
+                        sideChoice === 0
+                          ? 'border-emerald-500 bg-emerald-500 text-gray-900 hover:bg-emerald-400'
+                          : 'border-[#b91c1c] bg-[#b91c1c] text-white hover:bg-[#dc2626]'
+                      }`}
                     >
                       <span className="inline-flex items-center justify-center gap-2">
                         <span>{market.frozen ? 'Betting Frozen' : betDrawerOpen ? 'Hide Bet Options' : 'Place Bet'}</span>
@@ -637,7 +772,7 @@ export default function WatchPage() {
                       </span>
                     </button>
                     {betDrawerOpen && (
-                      <div className="space-y-3 rounded-md border border-white/10 bg-black/30 p-4">
+                      <div className="space-y-3 rounded-md border border-white/10 bg-black/30 p-4 w-full">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-white/45">
                             <span>Stake</span>
@@ -665,8 +800,8 @@ export default function WatchPage() {
                             className="w-full accent-[var(--accent)] disabled:opacity-40"
                           />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="relative flex-1 min-w-[118px]">
+                        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
+                          <div className="relative flex-[1_1_160px] min-w-[140px]">
                             <input
                               type="number"
                               inputMode="decimal"
@@ -676,12 +811,26 @@ export default function WatchPage() {
                               value={betAmount}
                               onChange={e => setBetAmount(e.target.value)}
                               disabled={!!actionLoading || market.frozen}
-                              className="w-full rounded-md border border-white/10 bg-black/40 pl-3 pr-7 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 disabled:opacity-60"
+                              className="w-full rounded-md border border-white/10 bg-black/40 pl-3 pr-10 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 disabled:opacity-60"
                             />
-                            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-sm font-semibold text-white">SOL</span>
+                            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-sm text-white">SOL</span>
                           </div>
-                          <div className="rounded-md border border-white/10 bg-black/30 px-2 py-2 text-[11px] text-white/75 w-[108px] text-center whitespace-nowrap flex items-center justify-center h-[38px]">
-                            {usdEstimate !== null ? `~ $${usdEstimate.toFixed(2)} USD` : '~ $— USD'}
+                          <div className="flex items-center gap-1 flex-1 min-w-[150px]">
+                            <div className="relative flex w-full items-center justify-between gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white h-[38px]">
+                              <span className="whitespace-nowrap">{formattedEstimate ? `~ ${formattedEstimate}` : '~ —'}</span>
+                              <select
+                                value={selectedCurrency}
+                                onChange={e => setSelectedCurrency(e.target.value as SupportedCurrency)}
+                                className="bg-transparent text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 border-none appearance-none pr-6"
+                              >
+                                {CURRENCY_CONFIG.map(option => (
+                                  <option key={option.code} value={option.code} className="bg-black text-white">
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm text-white/70">▾</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex gap-2 overflow-x-auto">
@@ -706,7 +855,11 @@ export default function WatchPage() {
                           type="button"
                           disabled={!!actionLoading || market.frozen}
                           onClick={submitBet}
-                          className="w-full rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent)]/90 disabled:opacity-60"
+                          className={`w-full rounded-md px-3 py-2 text-sm font-semibold transition border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:opacity-60 disabled:cursor-not-allowed ${
+                            sideChoice === 0
+                              ? 'border-emerald-500 bg-emerald-500 text-gray-900 hover:bg-emerald-400'
+                              : 'border-[#b91c1c] bg-[#b91c1c] text-white hover:bg-[#dc2626]'
+                          }`}
                         >
                           {actionLoading ? '...' : betActionLabel}
                         </button>
@@ -726,7 +879,7 @@ export default function WatchPage() {
                     <button
                       disabled={actionLoading === 'claim'}
                       onClick={() => run('claim', () => claimWinnings(wallet, selectedAuthority || undefined))}
-                      className="btn w-full btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white border-transparent"
+                      className="btn w-full btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--accent-contrast)] border-transparent"
                     >
                       {actionLoading === 'claim' ? '...' : 'Claim Payout'}
                     </button>

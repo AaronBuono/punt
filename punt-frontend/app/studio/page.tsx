@@ -322,7 +322,7 @@ export default function StudioPage() {
                     type="button"
                     onClick={launchQuickPoll}
                     disabled={!!actionLoading || !connected}
-                    className="w-full rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent)]/90 disabled:opacity-60"
+                    className="w-full rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-[var(--accent-contrast)] transition hover:bg-[var(--accent)]/90 disabled:opacity-60"
                   >
                     {actionLoading === 'init' ? '...' : 'Launch Quick Poll'}
                   </button>

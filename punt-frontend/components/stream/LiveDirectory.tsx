@@ -44,7 +44,7 @@ export function LiveDirectory({ onSelect }: { onSelect: (authority: string) => v
             return (
               <button key={s.authority} onClick={() => handleSelect(s.authority)} className="group relative overflow-hidden rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition p-3 flex flex-col items-start gap-2">
                 <div className="flex items-center gap-2 text-[10px] font-semibold">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[9px] uppercase tracking-wide"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>Live</span>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[var(--accent-contrast)] text-[9px] uppercase tracking-wide"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>Live</span>
                   <span className="text-white/80">{short}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-dim">

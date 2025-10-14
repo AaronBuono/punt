@@ -14,7 +14,7 @@ export default function Home() {
       {/* Header background video */}
       <section className="w-full px-6 xl:px-10">
         <div className="max-w-7xl mx-auto">
-          <div className="relative w-full aspect-[16/7] sm:aspect-[16/5] md:aspect-[16/4] lg:aspect-[16/3] xl:aspect-[16/2] overflow-hidden rounded-3xl border border-white/10 shadow-xl">
+          <div className="relative w-full aspect-[16/6] sm:aspect-[16/4] md:aspect-[16/3.25] lg:aspect-[16/2.75] xl:aspect-[16/2.2] overflow-hidden rounded-3xl border border-white/10 shadow-xl">
             <video
               className="absolute inset-0 h-full w-full object-cover"
               src="/media/background-header.mov"
@@ -31,7 +31,7 @@ export default function Home() {
             {/* Overlay text */}
             <div className="absolute inset-0 z-10 flex items-center">
               <div className="px-6 md:px-10 w-full">
-                <h1 className={`text-white font-semibold text-3xl sm:text-4xl md:text-5xl lg:text-6xl drop-shadow`}>Watch. Wager. Win!</h1>
+                <h1 className={`text-white font-semibold text-3xl sm:text-4xl md:text-5xl lg:text-6xl drop-shadow`}>Gotta Predict &lsquo;Em All!</h1>
                 <p className="mt-3 text-white/90 text-xs sm:text-sm md:text-base max-w-3xl">
                   Bet the moment. Watch your favourite packs opened live, place on-chain predictions in real time and win!
                 </p>
@@ -53,14 +53,14 @@ export default function Home() {
             {live.map((s) => {
               const short = s.authority.slice(0,4)+'…'+s.authority.slice(-4);
               const fallbackSrc = "/media/stream-fallback.svg";
-              const cardGlow = s.active ? 'shadow-[0_0_22px_rgba(255,77,90,0.35)]' : '';
+              const cardGlow = s.active ? 'shadow-[0_0_22px_rgba(255,223,0,0.35)]' : '';
               return (
                 <Link key={s.id} href={{ pathname: '/watch', query: { authority: s.authority } }} className="group block focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 transition-transform duration-200 hover:scale-[1.02]">
                   <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-md ${cardGlow}`}>
                     <div className="relative aspect-video bg-black/50">
                       <StreamPreview playbackUrl={s.playbackUrl} fallbackSrc={fallbackSrc} />
                       {s.active && (
-                        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_50%,rgba(255,77,90,0.12),transparent_60%)]" />
+                        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_50%,rgba(255,223,0,0.12),transparent_60%)]" />
                       )}
                     </div>
                     <div className="p-4 flex items-center justify-between text-[12px]">
@@ -70,7 +70,7 @@ export default function Home() {
                       </div>
                       <span className="btn btn-sm">Watch</span>
                     </div>
-                    <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[9px] uppercase tracking-wide"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>Live</span>
+                    <span className="absolute top-2 left-2 inline-flex items-center px-2.5 py-1 rounded bg-black/60 text-[var(--accent)] text-[11px] font-extrabold uppercase tracking-[0.32em]">Live</span>
                   </div>
                 </Link>
               );

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 // Dynamically import wallet button with SSR disabled to avoid markup mismatch.
 const WalletMultiButton = dynamic(
   async () => (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
-  { ssr: false, loading: () => <button className="!rounded-md !bg-[var(--accent)] !text-white text-sm px-3 py-1 opacity-60" disabled>Wallet</button> }
+  { ssr: false, loading: () => <button className="!rounded-md !bg-[var(--accent)] !text-[var(--accent-contrast)] text-sm px-3 py-1 opacity-60" disabled>Wallet</button> }
 );
 import { WalletBalance } from "./WalletBalance";
 import Image from "next/image";
@@ -32,8 +32,8 @@ export function Header() {
         </nav>
       </div>
       <div className="flex items-center gap-3">
-        <WalletBalance />
-  <WalletMultiButton className="!rounded-md !px-4 !py-2 !h-auto !bg-[var(--accent)] hover:!brightness-110 !text-white !text-xs !font-medium !border !border-white/10 !shadow-md" />
+    <WalletBalance />
+    <WalletMultiButton className="!rounded-md !px-4 !py-2 !h-auto !bg-[var(--accent)] hover:!brightness-110 !text-[var(--accent-contrast)] !text-xs !font-medium !border !border-white/10 !shadow-md" />
       </div>
     </header>
   );

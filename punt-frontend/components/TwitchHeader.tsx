@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { WalletBalance } from "./WalletBalance";
+import { usePathname } from "next/navigation";
 
 // Wallet button SSR-safe
 const WalletMultiButton = dynamic(
@@ -13,6 +14,20 @@ const WalletMultiButton = dynamic(
 );
 
 export function TwitchHeader() {
+  const pathname = usePathname();
+  const navLinks = [
+    { href: "/", label: "Browse", icon: Compass },
+    { href: "/buy", label: "Markets", icon: ShoppingBag },
+    { href: "/apply", label: "Apply to Stream", icon: Video },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
   return (
     <motion.header
   className="bg-[#0E1525]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0E1525]/80 sticky top-0 z-40 border-b border-white/10 px-4 py-2 flex items-center justify-between"
@@ -33,27 +48,24 @@ export function TwitchHeader() {
 
       {/* Center: nav buttons (md+) */}
       <nav className="hidden md:flex items-center gap-3 absolute left-1/2 -translate-x-1/2 z-10">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 text-sm font-medium transition-colors"
-        >
-          <Compass className="w-4 h-4 opacity-90" />
-          <span>Browse</span>
-        </Link>
-        <Link
-          href="/buy"
-          className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 text-sm font-medium transition-colors"
-        >
-          <ShoppingBag className="w-4 h-4 opacity-90" />
-          <span>Buy</span>
-        </Link>
-        <Link
-          href="/apply"
-          className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 text-sm font-medium transition-colors"
-        >
-          <Video className="w-4 h-4 opacity-90" />
-          <span>Apply to Stream</span>
-        </Link>
+        {navLinks.map(({ href, label, icon: Icon }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                active
+                  ? "border-transparent bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[0_0_18px_rgba(255,223,0,0.18)]"
+                  : "border-white/10 bg-white/5 text-white/90 hover:bg-white/10"
+              }`}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon className={`w-4 h-4 ${active ? "text-[var(--accent-contrast)]" : "text-white/75"}`} />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Right: actions */}

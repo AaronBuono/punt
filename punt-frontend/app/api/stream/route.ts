@@ -96,6 +96,7 @@ export async function GET(req: NextRequest) {
       streamKey: rec.streamKey,
       active: !!rec.isActive,
       viewerCount: rec.viewerCount ?? 0,
+      title: rec.title ?? null,
     },
   }, { headers: { "Cache-Control": "no-store" } });
 }
@@ -163,6 +164,7 @@ export async function POST(req: NextRequest) {
       streamKey: rec.streamKey,
       active: !!rec.isActive,
       viewerCount: rec.viewerCount ?? 0,
+      title: rec.title ?? null,
     },
   }, { headers: { "Cache-Control": "no-store" } });
 }
@@ -170,7 +172,6 @@ export async function POST(req: NextRequest) {
 // PATCH /api/stream { authority: <pubkey>, refresh?: true }
 // Forces a refresh of the remote stream status (isActive).
 export async function PATCH(req: NextRequest) {
-  if (!API_KEY) return missingKeyResponse();
   const body = await req.json().catch(() => ({}));
   const authority: string | undefined = body.authority?.trim();
   if (!authority) return new Response(JSON.stringify({ error: "authority required" }), { status: 400 });
@@ -185,19 +186,30 @@ export async function PATCH(req: NextRequest) {
     console.warn("[stream] PATCH expired signature", { authority });
     return new Response(JSON.stringify({ error: "expired signature" }), { status: 400 });
   }
-  const msg = `refresh-stream:${authority}:${ts}`;
-  if (!verifySignature(authority, msg, sig)) {
+  const actionRaw = typeof body.action === "string" ? body.action : undefined;
+  const action = actionRaw?.toLowerCase() === "update-title" ? "update-title" : "refresh";
+  if (action !== "update-title" && !API_KEY) return missingKeyResponse();
+  const expectedMsg = action === "update-title" ? `update-stream:${authority}:${ts}` : `refresh-stream:${authority}:${ts}`;
+  if (!verifySignature(authority, expectedMsg, sig)) {
     console.warn("[stream] PATCH invalid signature", { authority });
     return new Response(JSON.stringify({ error: "invalid signature" }), { status: 401 });
   }
 
   const rec = await getAuthorityStream(authority);
   if (!rec) return new Response(JSON.stringify({ error: "no stream" }), { status: 404 });
-  const live = await fetchLivepeerStream(rec.id).catch(() => null);
-  if (live) {
-    rec.isActive = !!live.isActive;
-    rec.lastFetched = Date.now();
+  if (action === "update-title") {
+    const provided = typeof body.title === "string" ? body.title : "";
+    const normalized = provided.replace(/\s+/g, " ").trim();
+    const truncated = normalized.slice(0, 80);
+    rec.title = truncated.length ? truncated : null;
     await setAuthorityStream(authority, rec);
+  } else {
+    const live = await fetchLivepeerStream(rec.id).catch(() => null);
+    if (live) {
+      rec.isActive = !!live.isActive;
+      rec.lastFetched = Date.now();
+      await setAuthorityStream(authority, rec);
+    }
   }
   return Response.json({
     stream: {
@@ -206,6 +218,7 @@ export async function PATCH(req: NextRequest) {
       streamKey: rec.streamKey,
       active: !!rec.isActive,
       viewerCount: rec.viewerCount ?? 0,
+      title: rec.title ?? null,
     },
   }, { headers: { "Cache-Control": "no-store" } });
 }

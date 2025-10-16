@@ -12,6 +12,7 @@ model Stream {
   livepeerId        String
   playbackId        String
   streamKey         String
+  title             String?
   isActive          Boolean  @default(false)
   viewerCount       Int      @default(0)
   manuallyStopped   Boolean  @default(false)

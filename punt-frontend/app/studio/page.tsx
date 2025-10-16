@@ -168,9 +168,9 @@ export default function StudioPage() {
   const launchQuickPoll = async () => {
     if (!connected) return;
     const buyIn = clampBuyIn(quickPollBuyIn);
-    const question = `Will this pack be over or under ${formatBuyIn(buyIn)}?`;
-    const defaultYes = "OVER";
-    const defaultNo = "UNDER";
+    const question = `Will this pack be worth more then ${formatBuyIn(buyIn)}?`;
+    const defaultYes = "Yes";
+    const defaultNo = "No";
     const ok = await run('init', () => initializeMarket(wallet, { title: question, labelYes: defaultYes, labelNo: defaultNo, feeBps: 20 }));
     if (ok && publicKey) {
       const auth = publicKey.toBase58();
@@ -179,7 +179,7 @@ export default function StudioPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           authority: auth,
-          text: `🎯 Quick poll launched: ${formatBuyIn(buyIn)} entry • ${defaultYes} vs ${defaultNo}.`,
+          text: `🎯 Quick poll launched: ${question} (${defaultYes} vs ${defaultNo}).`,
           type: 'system',
         }),
       }).catch(() => {});
@@ -284,10 +284,10 @@ export default function StudioPage() {
                     <h3 className="text-sm font-semibold text-white">Quick Over/Under Poll</h3>
                     <p className="text-[11px] text-white/60">Default question and labels are prefilled. Adjust the buy-in and launch instantly.</p>
                     <div className="rounded-md border border-white/5 bg-black/30 px-3 py-2 text-[11px] text-white/70">
-                      <p className="font-semibold text-white">{`Will this pack be over or under ${formatBuyIn(quickPollBuyIn)}?`}</p>
+                      <p className="font-semibold text-white">{`Will this pack be worth more then ${formatBuyIn(quickPollBuyIn)}?`}</p>
                       <div className="mt-2 flex justify-between text-[10px] uppercase tracking-[0.2em] text-white/40">
-                        <span>Option 1: OVER</span>
-                        <span>Option 2: UNDER</span>
+                        <span>Option 1: Yes</span>
+                        <span>Option 2: No</span>
                       </div>
                     </div>
                   </div>

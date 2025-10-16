@@ -9,6 +9,7 @@ interface DirectoryStream {
   viewerCount: number;
   playbackUrl: string;
   lastFetched: number;
+  title?: string | null;
 }
 interface DirectoryResponse { streams: DirectoryStream[] }
 
@@ -41,14 +42,16 @@ export function LiveDirectory({ onSelect }: { onSelect: (authority: string) => v
         <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-3">
           {streams.map(s => {
             const short = s.authority.slice(0,4)+'…'+s.authority.slice(-4);
+            const displayTitle = s.title?.trim() || short;
             return (
               <button key={s.authority} onClick={() => handleSelect(s.authority)} className="group relative overflow-hidden rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition p-3 flex flex-col items-start gap-2">
                 <div className="flex items-center gap-2 text-[10px] font-semibold">
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[var(--accent-contrast)] text-[9px] uppercase tracking-wide"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"/>Live</span>
-                  <span className="text-white/80">{short}</span>
+                  <span className="text-white/80 truncate max-w-[120px]">{displayTitle}</span>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-dim">
-                  <span>{s.viewerCount} viewers</span>
+                <div className="flex flex-col gap-1 text-[10px] text-dim">
+                  <span className="text-white/50">{s.viewerCount} viewers</span>
+                  <span className="text-white/40 uppercase tracking-[0.25em]">{short}</span>
                 </div>
                 <span className="absolute inset-0 ring-0 focus-visible:ring-2 focus-visible:ring-purple-500/60 rounded-md" />
               </button>

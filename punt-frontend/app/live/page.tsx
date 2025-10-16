@@ -5,7 +5,7 @@ import Link from 'next/link';
 const fetcher = (url: string) => fetch(url).then(r=>r.json());
 
 export default function LivePage() {
-  const { data, isLoading } = useSWR<{ streams: { authority: string; id: string; active: boolean; viewerCount: number; playbackUrl: string; lastFetched: number }[] }>("/api/streams?active=1", fetcher, { refreshInterval: 6000 });
+  const { data, isLoading } = useSWR<{ streams: { authority: string; id: string; active: boolean; viewerCount: number; playbackUrl: string; lastFetched: number; title?: string | null }[] }>("/api/streams?active=1", fetcher, { refreshInterval: 6000 });
   const streams = data?.streams || [];
 
   return (
@@ -23,13 +23,14 @@ export default function LivePage() {
         <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4">
           {streams.map(s => {
             const short = s.authority.slice(0,4)+'…'+s.authority.slice(-4);
+            const displayTitle = s.title?.trim() || short;
             return (
               <div key={s.id} className="relative group overflow-hidden rounded-md border border-white/10 bg-white/5">
                 <div className="aspect-video bg-black/50 flex items-center justify-center text-[11px] text-dim">Preview</div>
                 <div className="p-3 flex items-center justify-between text-[11px]">
                   <div className="flex flex-col min-w-0">
-                    <span className="truncate">{short}</span>
-                    <span className="text-dim">{s.viewerCount} viewers</span>
+                    <span className="truncate text-white/90">{displayTitle}</span>
+                    <span className="text-dim">Host {short} · {s.viewerCount} viewers</span>
                   </div>
                   <Link href={{ pathname: '/watch', query: { authority: s.authority } }} className="btn btn-sm">Watch</Link>
                 </div>

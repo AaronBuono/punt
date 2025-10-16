@@ -5,6 +5,7 @@ export interface AuthorityStreamRecord {
   id: string;
   playbackId: string;
   streamKey: string;
+  title?: string | null;
   isActive?: boolean;
   viewerCount?: number;
   lastFetched?: number;
@@ -27,6 +28,7 @@ function mapRow(row: Stream) {
     id: row.livepeerId,
     playbackId: row.playbackId,
     streamKey: row.streamKey,
+    title: row.title ?? undefined,
     isActive: row.isActive,
     viewerCount: row.viewerCount,
     manuallyStopped: row.manuallyStopped,
@@ -56,6 +58,7 @@ export async function setAuthorityStream(authority: string, rec: AuthorityStream
       livepeerId: rec.id,
       playbackId: rec.playbackId,
       streamKey: rec.streamKey,
+      title: rec.title ?? null,
       isActive: rec.isActive ?? false,
       viewerCount: rec.viewerCount ?? 0,
       manuallyStopped: rec.manuallyStopped ?? false,
@@ -68,6 +71,7 @@ export async function setAuthorityStream(authority: string, rec: AuthorityStream
       livepeerId: rec.id,
       playbackId: rec.playbackId,
       streamKey: rec.streamKey,
+      ...(rec.title !== undefined ? { title: rec.title } : {}),
       isActive: rec.isActive ?? false,
       viewerCount: rec.viewerCount ?? 0,
       manuallyStopped: rec.manuallyStopped ?? false,

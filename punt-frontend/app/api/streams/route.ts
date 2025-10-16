@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
       viewerCount: s.viewerCount ?? 0,
       playbackUrl: toPlaybackUrl(s.playbackId),
       lastFetched: s.lastFetched || 0,
+      title: s.title ?? null,
     }));
   const filtered = activeOnly ? all.filter((s: { active: boolean }) => s.active) : all;
   return Response.json({ streams: filtered }, { headers: { "Cache-Control": "no-store" } });

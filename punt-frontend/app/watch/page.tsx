@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useCallback, useRef, useMemo, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect, type Dispatch, type SetStateAction } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { ChevronsUpDown } from "lucide-react";
 import {
@@ -80,9 +80,16 @@ export default function WatchPage() {
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [pythPrices, setPythPrices] = useState<Record<string, FeedPrice>>({});
   const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>("USD");
-  const [streamMeta, setStreamMeta] = useState<{ active: boolean; viewerCount: number } | null>(null);
+  const [streamMeta, setStreamMeta] = useState<{ active: boolean; viewerCount: number; title: string | null } | null>(null);
   const [betCount, setBetCount] = useState<number | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const selectedAuthorityBase58 = selectedAuthority?.toBase58() || null;
+  const scrollToTop = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -152,6 +159,15 @@ export default function WatchPage() {
   useEffect(() => {
     fetchBalance();
   }, [fetchBalance]);
+
+  useLayoutEffect(() => {
+    scrollToTop();
+  }, [scrollToTop, selectedAuthorityBase58]);
+
+  useEffect(() => {
+    const id = setTimeout(scrollToTop, 75);
+    return () => clearTimeout(id);
+  }, [scrollToTop, selectedAuthorityBase58]);
 
   useEffect(() => {
     let cancelled = false;
@@ -478,9 +494,10 @@ export default function WatchPage() {
     ? Math.floor((ticket.amount / ticketSidePoolLamports) * totalPoolLamports)
     : 0;
   const projectedPayoutSol = projectedPayoutLamports > 0 ? lamportsToSol(projectedPayoutLamports) : 0;
-  const authorityBase58 = selectedAuthority?.toBase58() || publicKey?.toBase58() || null;
+  const authorityBase58 = selectedAuthorityBase58 || publicKey?.toBase58() || null;
   const hostShort = authorityBase58 ? `${authorityBase58.slice(0, 4)}…${authorityBase58.slice(-4)}` : 'No stream selected';
-  const hostMono = authorityBase58 ? authorityBase58.slice(0, 2).toUpperCase() : '??';
+  const streamTitle = streamMeta?.title?.trim() || null;
+  const streamTitleDisplay = streamTitle || hostShort;
   const totalPoolSol = market ? lamportsToSol(poolYesLamports + poolNoLamports) : 0;
   const yesShare = market ? ((poolYesLamports + poolNoLamports) > 0 ? (poolYesLamports / (poolYesLamports + poolNoLamports)) * 100 : 0) : 0;
   const noShare = market ? 100 - yesShare : 0;
@@ -563,10 +580,12 @@ export default function WatchPage() {
               <div className="relative w-full bg-black aspect-video lg:min-h-[460px]">
                 <ViewerStream authority={selectedAuthority.toBase58()} onMeta={setStreamMeta} />
               </div>
-              <div className="border-t border-white/10 px-4 py-3 space-y-4">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.25em] text-white/45">Streamer Wallet</p>
-                  <p className="text-sm sm:text-base font-semibold text-white break-all font-mono">{authorityBase58 || '—'}</p>
+              <div className="border-t border-white/10 px-4 py-3 space-y-2">
+                <div className="space-y-1">
+                  <p className="text-sm sm:text-base font-semibold text-white break-words">{streamTitleDisplay}</p>
+                  {authorityBase58 && (
+                    <p className="text-[10px] text-white/45 font-mono">Host {authorityBase58}</p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2 text-[11px]">
                   <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 font-medium border border-white/10 ${statusBadge.className}`}>
@@ -934,7 +953,7 @@ export default function WatchPage() {
   );
 }
 
-function ViewerStream({ authority, onMeta }: { authority: string; onMeta?: Dispatch<SetStateAction<{ active: boolean; viewerCount: number } | null>> }) {
+function ViewerStream({ authority, onMeta }: { authority: string; onMeta?: Dispatch<SetStateAction<{ active: boolean; viewerCount: number; title: string | null } | null>> }) {
   const [playback, setPlayback] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
@@ -951,7 +970,11 @@ function ViewerStream({ authority, onMeta }: { authority: string; onMeta?: Dispa
             setPlayback(null);
           }
           if (onMeta) {
-            onMeta(stream ? { active: !!stream.active, viewerCount: stream.viewerCount ?? 0 } : null);
+            onMeta(stream ? {
+              active: !!stream.active,
+              viewerCount: stream.viewerCount ?? 0,
+              title: typeof stream.title === 'string' ? stream.title : null,
+            } : null);
           }
         }
       } finally { /* no-op */ }
@@ -961,7 +984,7 @@ function ViewerStream({ authority, onMeta }: { authority: string; onMeta?: Dispa
     return () => {
       active = false;
       clearInterval(id);
-      if (onMeta) onMeta(null);
+  if (onMeta) onMeta(null);
     };
   }, [authority, onMeta]);
 

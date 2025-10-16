@@ -10,6 +10,7 @@ interface DirectoryStream {
   viewerCount: number;
   playbackUrl: string;
   lastFetched: number;
+  title?: string | null;
 }
 interface DirectoryResponse { streams: DirectoryStream[] }
 const fetcher = (url: string) => fetch(url).then(r=>r.json());
@@ -33,11 +34,13 @@ export function TwitchSidebar({ onSelect }: { onSelect: (authority: string) => v
         )}
         {streams.map((s) => {
           const short = s.authority.slice(0,4)+'…'+s.authority.slice(-4);
+          const displayTitle = s.title?.trim() || short;
           return (
             <li key={s.id}>
               <button onClick={() => handleSelect(s.authority)} className="w-full text-left px-4 py-2 flex items-center justify-between hover:bg-white/5 transition">
                 <div className="flex flex-col min-w-0">
-                  <span className="truncate text-white/90">{short}</span>
+                  <span className="truncate text-white/90">{displayTitle}</span>
+                  <span className="text-[10px] text-white/50">Host {short}</span>
                   <span className="text-[10px] text-dim">{s.viewerCount} viewers</span>
                 </div>
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--accent)]/80 text-[var(--accent-contrast)] text-[9px] uppercase tracking-wide">

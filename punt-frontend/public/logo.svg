@@ -11,23 +11,10 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
-     id="defs1">
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath1">
-      <rect
-         style="fill:#ffdf00;fill-opacity:0.103825;fill-rule:evenodd;stroke-width:0.992527"
-         id="rect2"
-         width="336.41071"
-         height="166.588"
-         x="-45.496159"
-         y="27.205402" />
-    </clipPath>
-  </defs>
+     id="defs1" />
   <g
      id="g1"
-     transform="matrix(1.1408804,0,0,1.1408804,61.947631,-26.066601)"
-     clip-path="url(#clipPath1)">
+     transform="matrix(1.1408804,0,0,1.1408804,61.947631,-26.066601)">
     <image
        width="199.24873"
        height="199.24873"

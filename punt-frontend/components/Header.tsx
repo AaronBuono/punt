@@ -31,7 +31,15 @@ export function Header() {
       <div className="flex items-center gap-6 flex-1 min-w-0">
         <Link href="/" className="flex items-center group" aria-label="Punt Home">
           <span className="relative inline-block w-32 h-9 sm:w-40 sm:h-10">
-            <Image src="/logo.svg" alt="Punt" fill priority className="object-contain drop-shadow-md group-hover:brightness-110 transition" sizes="(max-width: 640px) 128px, 160px" />
+            <Image
+              src="/logo.png"
+              alt="Punt"
+              fill
+              priority
+              unoptimized
+              className="object-contain drop-shadow-md group-hover:brightness-110 transition"
+              sizes="(max-width: 640px) 128px, 160px"
+            />
           </span>
         </Link>
         <nav className="hidden md:flex items-center gap-3 text-xs font-medium">

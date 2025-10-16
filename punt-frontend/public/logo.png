@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1080"
+   height="1080"
+   viewBox="0 0 285.75 285.75001"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
+   sodipodi:docname="punt_logo.png"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#000000"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="0.69992559"
+     inkscape:cx="420.75901"
+     inkscape:cy="567.20315"
+     inkscape:window-width="1512"
+     inkscape:window-height="945"
+     inkscape:window-x="0"
+     inkscape:window-y="37"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="path3-3"
+       style="display:inline;fill:#ffdf00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.279346;stroke-dasharray:none;stroke-opacity:1"
+       inkscape:label="lightning"
+       d="M 218.41561 30.280323 L 89.314447 178.01291 A 64.057419 64.057419 0 0 1 78.817413 142.875 A 64.057419 64.057419 0 0 1 142.875 78.817413 A 64.057419 64.057419 0 0 1 159.1939 80.930979 L 171.72647 68.915691 A 79.387405 79.387405 0 0 0 142.875 63.487599 A 79.387405 79.387405 0 0 0 63.487599 142.875 A 79.387405 79.387405 0 0 0 95.682017 206.71245 L 74.970619 264.61021 L 218.41561 30.280323 z M 197.26341 85.045456 L 191.48341 97.480873 L 190.36564 99.885894 A 64.057419 64.057419 0 0 1 206.93259 142.875 A 64.057419 64.057419 0 0 1 142.875 206.93259 A 64.057419 64.057419 0 0 1 126.37678 204.77148 L 126.37627 204.77148 L 115.67253 217.4565 A 79.387405 79.387405 0 0 0 142.875 222.26241 A 79.387405 79.387405 0 0 0 222.26241 142.875 A 79.387405 79.387405 0 0 0 197.26341 85.045456 z " />
+    <path
+       style="display:inline;fill:#ffdf00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.264999;stroke-dasharray:none;stroke-opacity:1"
+       d="M 220.09475,37.777458 Z"
+       id="path2" />
+  </g>
+</svg>

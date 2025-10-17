@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect, type Dispatch, type SetStateAction } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { ChevronsUpDown } from "lucide-react";
 import {
   bet,
   freezeMarket,
@@ -19,13 +18,16 @@ import {
   ParsedBetMarket,
   ParsedBetTicket,
   getConnection,
+  getAuthorityMetaPda,
 } from "@/lib/solana";
-import { PublicKey } from "@solana/web3.js";
+import { computeNetPayoutLamports } from "@/lib/payout";
+import { PublicKey, type Connection } from "@solana/web3.js";
 import { useToast } from "@/components/ToastProvider";
 import { StreamPlayer } from "@/components/stream/StreamPlayer";
 import { ChatPanel } from "@/components/stream/ChatPanel";
 import { PollSummaryBar } from "@/components/PollSummaryBar";
 import { PredictionOverlay } from "@/components/stream/PredictionOverlay";
+import { BetToggleGroup } from "@/components/BetToggleGroup";
 
 const PYTH_PRICE_FEEDS = {
   SOL_USD: "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
@@ -69,12 +71,21 @@ export default function WatchPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [lastSignature, setLastSignature] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [autoOutcome, setAutoOutcome] = useState<{ kind: "won" | "lost"; amountSol: number; signature: string } | null>(null);
+  const [autoProcessing, setAutoProcessing] = useState<"claim" | "close" | null>(null);
+  const [autoFailure, setAutoFailure] = useState<{ claim: boolean; close: boolean }>({ claim: false, close: false });
   const busyRef = useRef(false);
+  const autoHandledRef = useRef<{ claim: Set<string>; close: Set<string> }>({ claim: new Set(), close: new Set() });
+  const prevMarketKeyRef = useRef<string | null>(null);
+  const realtimeRetryRef = useRef<number | null>(null);
+  const refreshThrottleRef = useRef<number | null>(null);
+  const realtimeConnectionRef = useRef<Connection | null>(null);
+  const realtimeListenerIdsRef = useRef<number[]>([]);
+  const lastBetCountFetchRef = useRef(0);
   const [market, setMarket] = useState<ParsedBetMarket | null>(null);
   const [ticket, setTicket] = useState<ParsedBetTicket | null>(null);
   const [betAmount, setBetAmount] = useState<string>("0.001");
-  const [sideChoice, setSideChoice] = useState<0 | 1>(0);
-  const [betDrawerOpen, setBetDrawerOpen] = useState(false);
+  const [sideChoice, setSideChoice] = useState<0 | 1 | null>(null);
   const [selectedAuthority, setSelectedAuthority] = useState<PublicKey | null>(null);
   const [mounted, setMounted] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number>(0);
@@ -82,8 +93,13 @@ export default function WatchPage() {
   const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>("USD");
   const [streamMeta, setStreamMeta] = useState<{ active: boolean; viewerCount: number; title: string | null } | null>(null);
   const [betCount, setBetCount] = useState<number | null>(null);
+  const [marketPubkey, setMarketPubkey] = useState<string | null>(null);
+  const [ticketPubkey, setTicketPubkey] = useState<string | null>(null);
+  const [authorityMetaKey, setAuthorityMetaKey] = useState<string | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<"idle" | "connecting" | "connected" | "disconnected">("idle");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const selectedAuthorityBase58 = selectedAuthority?.toBase58() || null;
+  const walletBase58 = publicKey?.toBase58() || null;
   const scrollToTop = useCallback(() => {
     if (typeof window === "undefined") return;
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -97,41 +113,130 @@ export default function WatchPage() {
     if (ticket) {
       setSideChoice(ticket.side as 0 | 1);
     } else {
-      setSideChoice(0);
+      setSideChoice(null);
     }
   }, [ticket]);
+
+  useEffect(() => {
+    lastBetCountFetchRef.current = 0;
+  }, [selectedAuthorityBase58, walletBase58]);
+
+  useEffect(() => {
+    const key = market ? `${market.authority}:${market.cycle}` : null;
+    if (key !== prevMarketKeyRef.current) {
+      prevMarketKeyRef.current = key;
+      autoHandledRef.current.claim.clear();
+      autoHandledRef.current.close.clear();
+      setAutoOutcome(null);
+      setAutoProcessing(null);
+      setAutoFailure({ claim: false, close: false });
+    }
+  }, [market]);
+
+  useEffect(() => {
+    const candidate = selectedAuthority ?? publicKey ?? null;
+    if (!candidate) {
+      if (authorityMetaKey !== null) {
+        setAuthorityMetaKey(null);
+      }
+      return;
+    }
+    const expected = getAuthorityMetaPda(candidate).toBase58();
+    if (authorityMetaKey !== expected) {
+      setAuthorityMetaKey(expected);
+    }
+  }, [selectedAuthority, publicKey, authorityMetaKey]);
+
 
   const refresh = useCallback(async () => {
     let nextMarket: ParsedBetMarket | null = null;
     let nextTicket: ParsedBetTicket | null = null;
+    let nextMarketKey: string | null = null;
+    let nextTicketKey: string | null = null;
+    let nextBetCount: number | null = betCount;
+    let countAuthority: PublicKey | null = null;
+
     try {
       if (!publicKey) {
         if (selectedAuthority) {
           const m = await fetchMarketPublic(selectedAuthority);
-          nextMarket = m?.data || null;
+          if (m?.data) {
+            nextMarket = m.data;
+            nextMarketKey = m.pubkey?.toBase58?.() ?? null;
+            countAuthority = selectedAuthority;
+          } else {
+            nextBetCount = null;
+          }
+        } else {
+          nextBetCount = null;
         }
       } else if (selectedAuthority && selectedAuthority.toBase58() !== publicKey.toBase58()) {
         const m = await fetchMarketPublic(selectedAuthority);
-        nextMarket = m?.data || null;
-        if (nextMarket) {
+        if (m?.data) {
+          nextMarket = m.data;
+          nextMarketKey = m.pubkey?.toBase58?.() ?? null;
           const t = await fetchTicket(wallet, selectedAuthority);
-          nextTicket = t?.data || null;
+          if (t?.data) {
+            nextTicket = t.data;
+            nextTicketKey = t.pubkey?.toBase58?.() ?? null;
+          } else {
+            nextTicket = null;
+            nextTicketKey = null;
+          }
+          countAuthority = selectedAuthority;
+        } else {
+          nextTicket = null;
+          nextTicketKey = null;
+          nextBetCount = null;
         }
-      } else {
+      } else if (publicKey) {
         const m = await fetchMarket(wallet, undefined);
-        nextMarket = m?.data || null;
-        if (nextMarket) {
+        if (m?.data) {
+          nextMarket = m.data;
+          nextMarketKey = m.pubkey?.toBase58?.() ?? null;
           const t = await fetchTicket(wallet, undefined);
-          nextTicket = t?.data || null;
+          if (t?.data) {
+            nextTicket = t.data;
+            nextTicketKey = t.pubkey?.toBase58?.() ?? null;
+          } else {
+            nextTicket = null;
+            nextTicketKey = null;
+          }
+          countAuthority = selectedAuthority ?? publicKey;
+        } else {
+          nextTicket = null;
+          nextTicketKey = null;
+          nextBetCount = null;
         }
       }
     } catch (e) {
       console.error(e);
     }
+
+    if (!nextMarket || !countAuthority) {
+      nextBetCount = null;
+    } else {
+      const now = Date.now();
+      const shouldFetchCount = now - lastBetCountFetchRef.current > 1_000 || nextBetCount === null;
+      if (shouldFetchCount) {
+        try {
+          nextBetCount = await fetchMarketTicketCountPublic(countAuthority);
+          lastBetCountFetchRef.current = now;
+        } catch (err) {
+          console.warn('[watch] failed to refresh bet count', err);
+        }
+      }
+    }
+
     setMarket(nextMarket);
     setTicket(nextTicket);
+    setMarketPubkey(nextMarketKey);
+    setTicketPubkey(nextTicketKey);
+    if (nextBetCount !== betCount) {
+      setBetCount(nextBetCount);
+    }
     return { market: nextMarket, ticket: nextTicket };
-  }, [publicKey, wallet, selectedAuthority]);
+  }, [publicKey, wallet, selectedAuthority, betCount]);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +246,158 @@ export default function WatchPage() {
     })();
     return () => { cancelled = true; };
   }, [refresh]);
+
+  const scheduleRefresh = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (refreshThrottleRef.current !== null) return;
+    const timeoutId = window.setTimeout(() => {
+      refresh()
+        .catch(err => console.warn("[watch] realtime refetch failed", err))
+        .finally(() => {
+          refreshThrottleRef.current = null;
+        });
+    }, 120);
+    refreshThrottleRef.current = timeoutId;
+  }, [refresh]);
+
+  useEffect(() => () => {
+    if (typeof window === "undefined") return;
+    if (refreshThrottleRef.current !== null) {
+      window.clearTimeout(refreshThrottleRef.current);
+      refreshThrottleRef.current = null;
+    }
+    if (realtimeRetryRef.current !== null) {
+      window.clearTimeout(realtimeRetryRef.current);
+      realtimeRetryRef.current = null;
+    }
+    const conn = realtimeConnectionRef.current;
+    if (conn && realtimeListenerIdsRef.current.length) {
+      realtimeListenerIdsRef.current.forEach(id => {
+        conn.removeAccountChangeListener(id).catch(() => {});
+      });
+    }
+    realtimeListenerIdsRef.current = [];
+    realtimeConnectionRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!marketPubkey && !authorityMetaKey) {
+      setRealtimeStatus(prev => (prev === "idle" ? prev : "idle"));
+      return;
+    }
+
+    let cancelled = false;
+    let attempt = 0;
+    let hadActiveSubscription = false;
+
+    const cleanupListeners = () => {
+      const conn = realtimeConnectionRef.current;
+      if (conn && realtimeListenerIdsRef.current.length) {
+        realtimeListenerIdsRef.current.forEach(id => {
+          conn.removeAccountChangeListener(id).catch(() => {});
+        });
+      }
+      realtimeListenerIdsRef.current = [];
+      realtimeConnectionRef.current = null;
+    };
+
+    const subscribe = async () => {
+      if (cancelled) return;
+      setRealtimeStatus(prev => (prev === "connected" ? prev : "connecting"));
+      try {
+        const conn = await getConnection();
+        if (cancelled) return;
+        cleanupListeners();
+        realtimeConnectionRef.current = conn;
+        const ids: number[] = [];
+        if (marketPubkey) {
+          try {
+            const pk = new PublicKey(marketPubkey);
+            const id = conn.onAccountChange(pk, () => {
+              scheduleRefresh();
+            }, "confirmed");
+            ids.push(id);
+          } catch (err) {
+            console.warn("[watch] invalid market pubkey for subscription", err);
+          }
+        }
+        if (ticketPubkey) {
+          try {
+            const pk = new PublicKey(ticketPubkey);
+            const id = conn.onAccountChange(pk, () => {
+              scheduleRefresh();
+            }, "confirmed");
+            ids.push(id);
+          } catch (err) {
+            console.warn("[watch] invalid ticket pubkey for subscription", err);
+          }
+        }
+        if (authorityMetaKey) {
+          try {
+            const pk = new PublicKey(authorityMetaKey);
+            const id = conn.onAccountChange(pk, () => {
+              scheduleRefresh();
+            }, "processed");
+            ids.push(id);
+          } catch (err) {
+            console.warn("[watch] invalid authority meta pubkey for subscription", err);
+          }
+        }
+        realtimeListenerIdsRef.current = ids;
+        attempt = 0;
+        hadActiveSubscription = ids.length > 0;
+        if (hadActiveSubscription) {
+          setRealtimeStatus("connected");
+          console.log("[watch] realtime connected", { market: marketPubkey, ticket: ticketPubkey, meta: authorityMetaKey });
+        } else {
+          setRealtimeStatus("idle");
+        }
+      } catch (err) {
+        console.warn("[watch] realtime subscribe failed", err);
+        cleanupListeners();
+        setRealtimeStatus("disconnected");
+        if (cancelled) return;
+        const delay = Math.min(2000 * Math.pow(2, attempt), 30000);
+        attempt += 1;
+        if (realtimeRetryRef.current !== null) {
+          window.clearTimeout(realtimeRetryRef.current);
+        }
+        realtimeRetryRef.current = window.setTimeout(() => {
+          subscribe();
+        }, delay);
+      }
+    };
+
+    subscribe();
+
+    return () => {
+      cancelled = true;
+      if (realtimeRetryRef.current !== null) {
+        window.clearTimeout(realtimeRetryRef.current);
+        realtimeRetryRef.current = null;
+      }
+      if (hadActiveSubscription) {
+        setRealtimeStatus(prev => (prev === "idle" ? prev : "disconnected"));
+      }
+      cleanupListeners();
+    };
+  }, [marketPubkey, ticketPubkey, authorityMetaKey, scheduleRefresh]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (realtimeStatus === "connected") return;
+    const id = window.setInterval(() => {
+      refresh().catch(err => console.warn("[watch] fallback refresh failed", err));
+    }, 15000);
+    return () => window.clearInterval(id);
+  }, [realtimeStatus, refresh]);
+
+  useEffect(() => {
+    if (realtimeStatus === "disconnected") {
+      console.warn("[watch] realtime disconnected – falling back to polling");
+    }
+  }, [realtimeStatus]);
 
   const fetchBalance = useCallback(async () => {
     if (!publicKey) {
@@ -253,20 +510,20 @@ export default function WatchPage() {
       window.dispatchEvent(new CustomEvent('prediction-overlay', { detail: null }));
       return;
     }
-  const total = (market.poolYes + market.poolNo) || 0;
-  const hasVolume = total > 0;
-  const yesPct = hasVolume ? (market.poolYes / total) * 100 : 50;
-  const noPct = hasVolume ? 100 - yesPct : 50;
+    const total = (market.poolYes + market.poolNo) || 0;
+    const hasVolume = total > 0;
+    const yesPct = hasVolume ? (market.poolYes / total) * 100 : 50;
+    const noPct = hasVolume ? 100 - yesPct : 50;
     const detail = {
       title: market.title || 'Live Prediction',
       yesPct,
       noPct,
-      bets: undefined as number | undefined,
+      bets: betCount !== null ? betCount : undefined,
       labelYes: market.labelYes || undefined,
       labelNo: market.labelNo || undefined,
     };
     window.dispatchEvent(new CustomEvent('prediction-overlay', { detail }));
-  }, [market]);
+  }, [market, betCount]);
 
   // Poll on-chain ticket accounts to reflect the current number of active bets
   useEffect(() => {
@@ -294,10 +551,10 @@ export default function WatchPage() {
           window.dispatchEvent(new CustomEvent('prediction-overlay', { detail: null }));
           return;
         }
-  const total = (market.poolYes + market.poolNo) || 0;
-  const hasVolume = total > 0;
-  const yesPct = hasVolume ? (market.poolYes / total) * 100 : 50;
-  const noPct = hasVolume ? 100 - yesPct : 50;
+        const total = (market.poolYes + market.poolNo) || 0;
+        const hasVolume = total > 0;
+        const yesPct = hasVolume ? (market.poolYes / total) * 100 : 50;
+        const noPct = hasVolume ? 100 - yesPct : 50;
         setBetCount(count);
         const detail = {
           title: market.title || 'Live Prediction',
@@ -314,11 +571,14 @@ export default function WatchPage() {
         }
       }
     }
-    // Initial tick immediately, then interval
+    // Initial tick immediately, then interval when realtime fails
     tick();
+    if (realtimeStatus === 'connected') {
+      return () => { cancelled = true; };
+    }
     const id = setInterval(tick, 5000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [selectedAuthority, publicKey, market]);
+  }, [selectedAuthority, publicKey, market, realtimeStatus]);
 
   type TxResult = { txSig?: string } | void;
   const hasSig = (v: unknown): v is { txSig: string } => !!v && typeof v === 'object' && 'txSig' in v && typeof (v as { txSig: unknown }).txSig === 'string';
@@ -341,7 +601,7 @@ export default function WatchPage() {
       setError(null);
       setActionLoading(label);
       // Tiny submitting toast for position and poll actions
-  if (/^(bet_yes|bet_no|bet_more|claim|close_ticket|resolve_yes|resolve_no|withdraw|close|freeze)/.test(label)) {
+      if (/^(bet_yes|bet_no|bet_more|claim|claim_auto|close_ticket|close_ticket_auto|resolve_yes|resolve_no|withdraw|close|freeze)/.test(label)) {
         addToast({ type: "info", message: "Submitting…" });
       }
       const res = await fn();
@@ -359,9 +619,11 @@ export default function WatchPage() {
             resolve_yes: '🏁 Result set: YES wins',
             resolve_no: '🏁 Result set: NO wins',
             claim: '💰 Winnings claimed',
+            claim_auto: '💰 Winnings auto-claimed',
             withdraw: '📤 Host fees withdrawn',
             close: '📁 Poll archived',
-            close_ticket: '🧹 Ticket closed'
+            close_ticket: '🧹 Ticket closed',
+            close_ticket_auto: '🧹 Ticket auto-closed'
           };
           if (auth && sysMsgMap[label]) {
             fetch('/api/chat', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ authority: auth, text: sysMsgMap[label], type: 'system' }) }).catch(()=>{});
@@ -393,7 +655,7 @@ export default function WatchPage() {
   };
 
   const solToLamports = (s: string) => Math.round(parseFloat(s || "0") * 1_000_000_000);
-  const lockPosition = Boolean(actionLoading && /^(bet_yes|bet_no|bet_more|claim|close_ticket)/.test(actionLoading));
+  const lockPosition = Boolean(actionLoading && /^(bet_yes|bet_no|bet_more|claim|claim_auto|close_ticket|close_ticket_auto)/.test(actionLoading));
   const lockPoll = Boolean(actionLoading && /^(resolve_yes|resolve_no|withdraw|close|freeze)/.test(actionLoading));
   const lockAny = lockPoll || lockPosition;
   const marketResolved = market?.resolved;
@@ -408,14 +670,18 @@ export default function WatchPage() {
   const userWon = !!ticket && marketResolved && winningSide === ticket.side && !ticket.claimed;
   const userLost = !!ticket && marketResolved && !noWinner && winningSide !== 255 && winningSide !== ticket.side;
   const canManualCloseTicket = !!ticket && marketResolved && (ticket.claimed || userLost);
+  const awaitingAutoClaim = !!ticket && marketResolved && winningSide === ticket.side && !ticket.claimed;
+  const shouldAutoCloseWinner = !!ticket && marketResolved && winningSide === ticket.side && ticket.claimed;
+  const shouldAutoCloseLoser = !!ticket && marketResolved && winningSide !== 255 && winningSide !== ticket.side;
   const labelOver = market?.labelYes || 'OVER';
   const labelUnder = market?.labelNo || 'UNDER';
   const quickStakePresets = ['0.001', '0.005', '0.01'];
-  const yesIdleClasses = 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 hover:border-emerald-400/60';
-  const yesActiveClasses = 'border-transparent bg-emerald-500 text-gray-900 shadow-[0_0_15px_rgba(34,197,94,0.4)]';
-  const noIdleClasses = 'border-[#b91c1c]/50 bg-[#7f1d1d]/40 text-[#fecaca] hover:bg-[#991b1b]/50 hover:border-[#dc2626]/60';
-  const noActiveClasses = 'border-transparent bg-[#b91c1c] text-white shadow-[0_0_18px_rgba(185,28,28,0.45)]';
-  const betActionLabel = ticket ? 'Add To Position' : `Confirm ${sideChoice === 0 ? labelOver : labelUnder}`;
+  const betOptionsOpen = !!market && !market.frozen && !market.resolved && sideChoice !== null;
+  const betActionLabel = ticket
+    ? 'Add To Position'
+    : sideChoice !== null
+      ? `Confirm ${sideChoice === 0 ? labelOver : labelUnder}`
+      : 'Select a side';
   const betAmountNumber = parseFloat(betAmount || '0');
   const currencyFormatters = useMemo(() => {
     const result = {} as Record<SupportedCurrency, Intl.NumberFormat>;
@@ -483,10 +749,12 @@ export default function WatchPage() {
     : null;
   const poolYesLamports = market?.poolYes ?? 0;
   const poolNoLamports = market?.poolNo ?? 0;
+  const aggregatePoolLamports = poolYesLamports + poolNoLamports;
+  const hasPoolVolume = aggregatePoolLamports > 0;
   const ticketSideLabel = ticket ? (ticket.side === 0 ? labelOver : labelUnder) : null;
   const ticketAmountSol = ticket ? lamportsToSol(ticket.amount) : 0;
   const ticketSidePoolLamports = ticket ? (ticket.side === 0 ? poolYesLamports : poolNoLamports) : 0;
-  const totalPoolLamports = ticket ? poolYesLamports + poolNoLamports : 0;
+  const totalPoolLamports = ticket ? aggregatePoolLamports : 0;
   const ticketSharePct = ticket && ticketSidePoolLamports > 0
     ? (ticket.amount / ticketSidePoolLamports) * 100
     : 0;
@@ -494,18 +762,100 @@ export default function WatchPage() {
     ? Math.floor((ticket.amount / ticketSidePoolLamports) * totalPoolLamports)
     : 0;
   const projectedPayoutSol = projectedPayoutLamports > 0 ? lamportsToSol(projectedPayoutLamports) : 0;
+  const autoClaimFailed = autoFailure.claim && awaitingAutoClaim;
+  const autoCloseFailed = autoFailure.close && (shouldAutoCloseWinner || shouldAutoCloseLoser);
+  useEffect(() => {
+    if (!wallet?.publicKey) return;
+    if (!market || !marketResolved) return;
+    if (!ticket) return;
+    if (market.winningSide === undefined || market.winningSide === 255) return;
+    if (busyRef.current) return;
+
+    const authorityArg = selectedAuthority || undefined;
+    const keyBase = `${market.authority}:${market.cycle}:${ticket.user}`;
+    const isWinningTicket = ticket.side === market.winningSide;
+
+    if (isWinningTicket && !ticket.claimed) {
+      if (autoHandledRef.current.claim.has(keyBase)) return;
+    autoHandledRef.current.claim.add(keyBase);
+    setAutoFailure(prev => ({ ...prev, claim: false }));
+      setAutoProcessing('claim');
+      const payoutLamportsRaw = computeNetPayoutLamports(market, ticket);
+      const payoutLamports = payoutLamportsRaw > 0 ? payoutLamportsRaw : ticket.amount;
+      const payoutSol = lamportsToSol(payoutLamports);
+      (async () => {
+        try {
+          const success = await run('claim_auto', async () => {
+            const res = await claimWinnings(wallet, authorityArg);
+            if (res && 'txSig' in res && typeof res.txSig === 'string') {
+              setAutoOutcome({ kind: 'won', amountSol: payoutSol, signature: res.txSig });
+            }
+            return res;
+          });
+          if (!success) {
+            setAutoFailure(prev => ({ ...prev, claim: true }));
+            setAutoOutcome(null);
+          }
+        } finally {
+          setAutoProcessing(prev => (prev === 'claim' ? null : prev));
+        }
+      })();
+      return;
+    }
+
+    if (isWinningTicket && !ticket.claimed) return;
+
+    const closeKey = `${keyBase}:close`;
+    if (autoHandledRef.current.close.has(closeKey)) return;
+    if (!isWinningTicket && ticket.claimed) return;
+
+    autoHandledRef.current.close.add(closeKey);
+    setAutoFailure(prev => ({ ...prev, close: false }));
+    setAutoProcessing('close');
+    const isLoser = !isWinningTicket;
+    const lostAmountSol = isLoser ? lamportsToSol(ticket.amount) : 0;
+    (async () => {
+      try {
+        const success = await run('close_ticket_auto', async () => {
+          const res = await closeTicket(wallet, authorityArg);
+          if (isLoser && res && 'txSig' in res && typeof res.txSig === 'string') {
+            setAutoOutcome({ kind: 'lost', amountSol: lostAmountSol, signature: res.txSig });
+          }
+          return res;
+        });
+        if (!success) {
+          setAutoFailure(prev => ({ ...prev, close: true }));
+          if (isLoser) {
+            setAutoOutcome(null);
+          }
+        }
+      } finally {
+        setAutoProcessing(prev => (prev === 'close' ? null : prev));
+      }
+    })();
+  }, [wallet, market, marketResolved, ticket, selectedAuthority, run, computeNetPayoutLamports]);
   const authorityBase58 = selectedAuthorityBase58 || publicKey?.toBase58() || null;
   const hostShort = authorityBase58 ? `${authorityBase58.slice(0, 4)}…${authorityBase58.slice(-4)}` : 'No stream selected';
   const streamTitle = streamMeta?.title?.trim() || null;
   const streamTitleDisplay = streamTitle || hostShort;
-  const totalPoolSol = market ? lamportsToSol(poolYesLamports + poolNoLamports) : 0;
-  const yesShare = market ? ((poolYesLamports + poolNoLamports) > 0 ? (poolYesLamports / (poolYesLamports + poolNoLamports)) * 100 : 0) : 0;
-  const noShare = market ? 100 - yesShare : 0;
+  const totalPoolSol = market ? lamportsToSol(aggregatePoolLamports) : 0;
+  const yesShare = market ? (hasPoolVolume ? (poolYesLamports / aggregatePoolLamports) * 100 : 50) : 0;
+  const noShare = market ? (hasPoolVolume ? 100 - yesShare : 50) : 0;
   const viewerFormatter = useMemo(() => new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }), []);
   const formattedViewers = streamMeta ? viewerFormatter.format(streamMeta.viewerCount || 0) : '—';
   const statusBadge = streamMeta?.active
     ? { label: 'Live', className: 'bg-emerald-500/15 text-emerald-300' }
     : { label: 'Offline', className: 'bg-white/10 text-white/70' };
+  const realtimeBadge = useMemo(() => {
+    switch (realtimeStatus) {
+      case "connecting":
+        return { label: 'Connecting…', className: 'border-amber-300/40 text-amber-200 bg-amber-500/10', dot: 'bg-amber-200 animate-pulse' };
+      case "disconnected":
+        return { label: 'Auto refresh', className: 'border-white/15 text-white/70 bg-white/5', dot: 'bg-white/60' };
+      default:
+        return null;
+    }
+  }, [realtimeStatus]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -541,22 +891,19 @@ export default function WatchPage() {
         })
       );
     } else {
+      if (sideChoice === null) {
+        addToast({ type: "error", message: "Select a side first." });
+        return;
+      }
       await handleBet(sideChoice);
     }
-    setBetDrawerOpen(false);
   };
 
   useEffect(() => {
-    if (marketResolved) {
-      setBetDrawerOpen(false);
+    if (marketResolved || marketFrozen) {
+      setSideChoice(null);
     }
-  }, [marketResolved]);
-
-  useEffect(() => {
-    if (marketFrozen) {
-      setBetDrawerOpen(false);
-    }
-  }, [marketFrozen]);
+  }, [marketResolved, marketFrozen]);
 
   if (!mounted) {
     return (
@@ -621,11 +968,21 @@ export default function WatchPage() {
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Live Poll</p>
                 <h2 className="mt-1 text-lg font-semibold leading-tight text-white">{market?.title || 'Untitled Market'}</h2>
               </div>
-              {market && (
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide border ${market.resolved ? 'border-emerald-500/30 text-emerald-200 bg-emerald-500/10' : market.frozen ? 'border-amber-400/40 text-amber-200 bg-amber-500/10' : 'border-emerald-400/30 text-emerald-300 bg-emerald-500/10'}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${market.resolved ? 'bg-emerald-300' : market.frozen ? 'bg-amber-200' : 'bg-emerald-300 animate-pulse'}`} />
-                  {market.resolved ? 'Resolved' : market.frozen ? 'Frozen' : 'Live'}
-                </span>
+              {(market || realtimeBadge) && (
+                <div className="flex flex-col items-end gap-1">
+                  {market && (
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide border ${market.resolved ? 'border-emerald-500/30 text-emerald-200 bg-emerald-500/10' : market.frozen ? 'border-amber-400/40 text-amber-200 bg-amber-500/10' : 'border-emerald-400/30 text-emerald-300 bg-emerald-500/10'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${market.resolved ? 'bg-emerald-300' : market.frozen ? 'bg-amber-200' : 'bg-emerald-300 animate-pulse'}`} />
+                      {market.resolved ? 'Resolved' : market.frozen ? 'Frozen' : 'Live'}
+                    </span>
+                  )}
+                  {realtimeBadge && (
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide border ${realtimeBadge.className}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${realtimeBadge.dot}`} />
+                      {realtimeBadge.label}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
             {isInitialLoad ? (
@@ -746,6 +1103,31 @@ export default function WatchPage() {
                   </div>
                 )}
 
+                {autoOutcome?.kind === 'won' && (
+                  <div className="space-y-1 rounded-md border border-emerald-400/60 bg-emerald-500/10 px-3 py-3 text-xs text-emerald-100">
+                    <p className="text-sm font-semibold text-emerald-50">You won {autoOutcome.amountSol.toFixed(3)} SOL 🎉</p>
+                    <p className="break-all font-mono text-[10px] text-emerald-200/80">Tx: {autoOutcome.signature}</p>
+                  </div>
+                )}
+                {autoOutcome?.kind === 'lost' && (
+                  <div className="space-y-1 rounded-md border border-[#b91c1c]/50 bg-[#7f1d1d]/40 px-3 py-3 text-xs text-[#fecaca]">
+                    <p className="text-sm font-semibold">You lost {autoOutcome.amountSol.toFixed(3)} SOL. Better luck next time.</p>
+                    <p className="break-all font-mono text-[10px] text-[#fca5a5]/90">Tx: {autoOutcome.signature}</p>
+                  </div>
+                )}
+                {autoClaimFailed && (
+                  <div className="rounded-md border border-emerald-400/60 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+                    Automatic payout was cancelled. Use the button below to claim manually.
+                  </div>
+                )}
+                {autoCloseFailed && (
+                  <div className={`${shouldAutoCloseWinner ? 'rounded-md border border-emerald-300/40 bg-emerald-500/10 text-emerald-100' : 'rounded-md border border-[#b91c1c]/50 bg-[#7f1d1d]/40 text-[#fecaca]'} px-3 py-2 text-xs`}>
+                    {shouldAutoCloseWinner
+                      ? 'Automatic clear of your claimed ticket was cancelled. You can close it manually below.'
+                      : 'Automatic clear was cancelled. You can retry below.'}
+                  </div>
+                )}
+
                 {!userIsAuthority && !market.resolved && (
                   <div className="space-y-3 border-t border-white/10 pt-3">
                     {market.frozen && (
@@ -753,44 +1135,28 @@ export default function WatchPage() {
                         Poll frozen. Betting is closed.
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-2">
-                      {[0, 1].map(option => {
-                        const chosen = sideChoice === option;
-                        const disabled = !!actionLoading || market.frozen || (!!ticket && ticket.side !== option);
-                        const label = option === 0 ? labelOver : labelUnder;
-                        const palette = option === 0
-                          ? (chosen ? yesActiveClasses : yesIdleClasses)
-                          : (chosen ? noActiveClasses : noIdleClasses);
-                        const baseChoiceClasses = 'rounded-md px-3 py-2 text-sm font-semibold transition border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20';
-                        return (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setSideChoice(option as 0 | 1)}
-                            disabled={disabled}
-                            className={`${baseChoiceClasses} ${palette} ${disabled && !chosen ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setBetDrawerOpen(open => !open)}
-                      disabled={!!actionLoading || market.frozen}
-                      className={`w-full rounded-md px-3 py-2 text-sm font-semibold transition border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:opacity-60 disabled:cursor-not-allowed ${
-                        sideChoice === 0
-                          ? 'border-emerald-500 bg-emerald-500 text-gray-900 hover:bg-emerald-400'
-                          : 'border-[#b91c1c] bg-[#b91c1c] text-white hover:bg-[#dc2626]'
-                      }`}
-                    >
-                      <span className="inline-flex items-center justify-center gap-2">
-                        <span>{market.frozen ? 'Betting Frozen' : betDrawerOpen ? 'Hide Bet Options' : 'Place Bet'}</span>
-                        <ChevronsUpDown className={`w-4 h-4 ${betDrawerOpen ? 'rotate-180' : ''} transition-transform duration-200 ${market.frozen ? '' : 'animate-bounce'}`} />
-                      </span>
-                    </button>
-                    {betDrawerOpen && (
+                    <BetToggleGroup
+                      selected={sideChoice}
+                      onChange={next => {
+                        if (!!actionLoading || market.frozen) return;
+                        setSideChoice(next);
+                      }}
+                      options={[
+                        {
+                          value: 0,
+                          label: labelOver,
+                          accent: 'yes',
+                          disabled: !!actionLoading || market.frozen || (!!ticket && ticket.side !== 0),
+                        },
+                        {
+                          value: 1,
+                          label: labelUnder,
+                          accent: 'no',
+                          disabled: !!actionLoading || market.frozen || (!!ticket && ticket.side !== 1),
+                        },
+                      ]}
+                    />
+                    {betOptionsOpen && (
                       <div className="space-y-3 rounded-md border border-white/10 bg-black/30 p-4 w-full">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-white/45">
@@ -877,14 +1243,16 @@ export default function WatchPage() {
                           className={`w-full rounded-md px-3 py-2 text-sm font-semibold transition border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:opacity-60 disabled:cursor-not-allowed ${
                             sideChoice === 0
                               ? 'border-emerald-500 bg-emerald-500 text-gray-900 hover:bg-emerald-400'
-                              : 'border-[#b91c1c] bg-[#b91c1c] text-white hover:bg-[#dc2626]'
+                              : sideChoice === 1
+                                ? 'border-[#b91c1c] bg-[#b91c1c] text-white hover:bg-[#dc2626]'
+                                : 'border-white/20 bg-white/10 text-white/70'
                           }`}
                         >
                           {actionLoading ? '...' : betActionLabel}
                         </button>
                       </div>
                     )}
-                    {ticket && ticket.side !== sideChoice && (
+                    {ticket && sideChoice !== null && ticket.side !== sideChoice && (
                       <p className="text-[11px] text-amber-400">Existing tickets are locked to {ticket.side === 0 ? labelOver : labelUnder}.</p>
                     )}
                   </div>
@@ -893,29 +1261,47 @@ export default function WatchPage() {
                 {userWon && !noWinner && (
                   <div className="space-y-2">
                     <div className="rounded-md border border-emerald-400/50 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
-                      You won! Confirm to pull out your winnings.
+                      {autoProcessing === 'claim'
+                        ? 'Processing automatic payout… approve the wallet prompt when asked.'
+                        : autoClaimFailed
+                          ? 'Automatic payout needs your approval. Claim manually below.'
+                          : 'You won! We are claiming your payout automatically.'}
                     </div>
-                    <button
-                      disabled={actionLoading === 'claim'}
-                      onClick={() => run('claim', () => claimWinnings(wallet, selectedAuthority || undefined))}
-                      className="btn w-full btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--accent-contrast)] border-transparent"
-                    >
-                      {actionLoading === 'claim' ? '...' : 'Claim Payout'}
-                    </button>
+                    {autoClaimFailed && (
+                      <button
+                        disabled={actionLoading === 'claim' || actionLoading === 'claim_auto' || autoProcessing === 'claim'}
+                        onClick={() => run('claim', () => claimWinnings(wallet, selectedAuthority || undefined))}
+                        className="btn w-full btn-sm bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-[var(--accent-contrast)] border-transparent"
+                      >
+                        {actionLoading === 'claim' ? '...' : 'Claim Payout Manually'}
+                      </button>
+                    )}
                   </div>
                 )}
                 {canManualCloseTicket && !noWinner && (
                   <div className="space-y-2">
                     <div className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-xs text-white/70">
-                      You lost this round. Clearing will release your ticket rent.
+                      {autoProcessing === 'close'
+                        ? (shouldAutoCloseWinner
+                            ? 'Closing your claimed ticket automatically… approve the wallet prompt when asked.'
+                            : 'Clearing your ticket automatically… approve the wallet prompt when asked.')
+                        : autoCloseFailed
+                          ? (shouldAutoCloseWinner
+                              ? 'Automatic clear of your claimed ticket was cancelled. You can close it manually below.'
+                              : 'Automatic clear needs your approval. Retry below.')
+                          : (shouldAutoCloseWinner
+                              ? 'We are closing your claimed ticket automatically to release rent.'
+                              : 'You lost this round. We are clearing your ticket automatically.')}
                     </div>
-                    <button
-                      disabled={actionLoading === 'close_ticket'}
-                      onClick={() => run('close_ticket', () => closeTicket(wallet, selectedAuthority || undefined))}
-                      className="btn w-full btn-sm border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)]/10"
-                    >
-                      {actionLoading === 'close_ticket' ? '...' : 'Clear Position'}
-                    </button>
+                    {autoCloseFailed && (
+                      <button
+                        disabled={actionLoading === 'close_ticket' || actionLoading === 'close_ticket_auto' || autoProcessing === 'close'}
+                        onClick={() => run('close_ticket', () => closeTicket(wallet, selectedAuthority || undefined))}
+                        className="btn w-full btn-sm border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)]/10"
+                      >
+                        {actionLoading === 'close_ticket' ? '...' : 'Clear Position Manually'}
+                      </button>
+                    )}
                   </div>
                 )}
                 {ticket && marketResolved && noWinner && (

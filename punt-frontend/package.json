@@ -1,0 +1,48 @@
+{
+  "name": "punt-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "copy-idl": "mkdir -p public/idl && cp ../punt-program/target/idl/punt_program.json public/idl/punt_program.json || true",
+    "build": "npm run copy-idl && prisma generate && next build",
+    "start": "next start",
+    "mxe:fetch": "node scripts/create-or-get-mxe.js",
+    "lint": "eslint",
+    "postinstall": "prisma generate",
+    "test": "tsx --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/wallet-adapter-react": "^0.15.39",
+    "@solana/wallet-adapter-react-ui": "^0.9.39",
+    "@solana/wallet-adapter-wallets": "^0.19.37",
+    "@solana/web3.js": "^1.98.4",
+    "@prisma/client": "^6.2.1",
+    "bs58": "^6.0.0",
+    "framer-motion": "^12.23.2",
+    "livekit-client": "^2.15.11",
+    "livekit-server-sdk": "^2.14.0",
+    "lucide-react": "^0.545.0",
+    "next": "15.5.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "swr": "^2.3.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.3",
+    "prisma": "^6.2.1",
+    "pino-pretty": "^13.1.1",
+    "tailwindcss": "^4",
+    "jsdom": "^24.1.1",
+    "@types/jsdom": "^21.1.7",
+    "tsx": "^4.15.7",
+    "typescript": "^5"
+  }
+}

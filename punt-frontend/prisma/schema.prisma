@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Stream {
+  authority          String   @id
+  roomName           String
+  title              String?
+  isActive           Boolean  @default(false)
+  viewerCount        Int      @default(0)
+  manuallyStopped    Boolean  @default(false)
+  startedAt          DateTime?
+  endedAt            DateTime?
+  lastFetched        DateTime?
+  lastMetricsFetched DateTime?
+  currentMarketPubkey   String?
+  currentMarketCycle    Int?
+  currentMarketUpdatedAt DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([roomName])
+}

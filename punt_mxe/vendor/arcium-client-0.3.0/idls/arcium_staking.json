@@ -1,0 +1,4582 @@
+{
+  "address": "3y53DGSaqMNyiwpMkoHqscEwTV2U29aBW23vibQjw8mL",
+  "metadata": {
+    "name": "arcium_staking",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "activate_primary_stake",
+      "discriminator": [
+        40,
+        225,
+        112,
+        226,
+        120,
+        36,
+        194,
+        77
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "lockup_epochs",
+          "type": {
+            "defined": {
+              "name": "Epoch"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "claim_delegated_stake_rewards",
+      "discriminator": [
+        219,
+        66,
+        235,
+        92,
+        40,
+        196,
+        34,
+        62
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "destination",
+          "writable": true
+        },
+        {
+          "name": "primary_acc_owner"
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "primary_acc_owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_queue",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  101,
+                  81,
+                  117,
+                  101,
+                  117,
+                  101,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "primary_stake_account"
+              }
+            ]
+          }
+        },
+        {
+          "name": "delegated_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_offset",
+          "type": "u128"
+        },
+        {
+          "name": "proof",
+          "type": {
+            "defined": {
+              "name": "MTProof",
+              "generics": [
+                {
+                  "kind": "const",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "claims",
+          "type": {
+            "defined": {
+              "name": "RewardBatch"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "claim_primary_stake_rewards",
+      "discriminator": [
+        143,
+        34,
+        168,
+        105,
+        77,
+        122,
+        58,
+        72
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "destination",
+          "writable": true
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "proof",
+          "type": {
+            "defined": {
+              "name": "MTProof",
+              "generics": [
+                {
+                  "kind": "const",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "claims",
+          "type": {
+            "defined": {
+              "name": "RewardBatch"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "close_delegated_stake",
+      "discriminator": [
+        110,
+        229,
+        137,
+        54,
+        240,
+        115,
+        93,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "signer_ata",
+          "writable": true
+        },
+        {
+          "name": "withdrawal_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "delegation_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "delegation_owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "delegation_owner",
+          "docs": [
+            "extra checks"
+          ]
+        },
+        {
+          "name": "user_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "address": "BoVUVSJAhob2cvM5z4JZTdS6VWRSznh3bbzQD1TFjvDP"
+        },
+        {
+          "name": "pool_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool_account"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "clock",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_offset",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "deactivate_primary_stake",
+      "discriminator": [
+        167,
+        197,
+        174,
+        44,
+        77,
+        12,
+        254,
+        165
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "node_offset",
+          "type": {
+            "option": "u32"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delegate_stake",
+      "discriminator": [
+        50,
+        110,
+        95,
+        179,
+        194,
+        75,
+        140,
+        246
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "primary_acc_owner"
+        },
+        {
+          "name": "user_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "primary",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "primary_acc_owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_queue",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  101,
+                  81,
+                  117,
+                  101,
+                  117,
+                  101,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "primary"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "docs": [
+            "We don't need this account to actually derive the PDA, since we check",
+            "that the node is the correct one that the primary acc is associated to"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_offset",
+          "type": "u128"
+        },
+        {
+          "name": "lockup_epochs",
+          "type": {
+            "defined": {
+              "name": "Epoch"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "extend_primary_lockup",
+      "discriminator": [
+        15,
+        193,
+        152,
+        70,
+        232,
+        21,
+        138,
+        236
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "clock",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "lockup_epochs",
+          "type": {
+            "defined": {
+              "name": "Epoch"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "finalize_epoch_rewards",
+      "discriminator": [
+        96,
+        76,
+        184,
+        66,
+        143,
+        127,
+        194,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "primary_stake_owner"
+        },
+        {
+          "name": "primary_stake_owner_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "primary_stake_owner"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  160,
+                  125,
+                  200,
+                  55,
+                  211,
+                  178,
+                  66,
+                  27,
+                  149,
+                  22,
+                  219,
+                  191,
+                  28,
+                  218,
+                  171,
+                  113,
+                  92,
+                  216,
+                  236,
+                  165,
+                  124,
+                  20,
+                  89,
+                  205,
+                  119,
+                  106,
+                  175,
+                  166,
+                  185,
+                  155,
+                  69,
+                  242
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "stake_queue",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  101,
+                  81,
+                  117,
+                  101,
+                  117,
+                  101,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "primary_stake_account"
+              }
+            ]
+          }
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "primary_stake_owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool_account"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  160,
+                  125,
+                  200,
+                  55,
+                  211,
+                  178,
+                  66,
+                  27,
+                  149,
+                  22,
+                  219,
+                  191,
+                  28,
+                  218,
+                  171,
+                  113,
+                  92,
+                  216,
+                  236,
+                  165,
+                  124,
+                  20,
+                  89,
+                  205,
+                  119,
+                  106,
+                  175,
+                  166,
+                  185,
+                  155,
+                  69,
+                  242
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "clock",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "node_offset",
+          "type": "u32"
+        },
+        {
+          "name": "stake_reward",
+          "type": {
+            "defined": {
+              "name": "RewardClaim"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "init",
+      "discriminator": [
+        220,
+        59,
+        207,
+        236,
+        108,
+        250,
+        47,
+        100
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "address": "BoVUVSJAhob2cvM5z4JZTdS6VWRSznh3bbzQD1TFjvDP"
+        },
+        {
+          "name": "pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool_account"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_delegated_stake_acc",
+      "discriminator": [
+        70,
+        104,
+        72,
+        101,
+        170,
+        111,
+        124,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "from",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "from_ata",
+          "writable": true
+        },
+        {
+          "name": "master_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "from"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "address": "BoVUVSJAhob2cvM5z4JZTdS6VWRSznh3bbzQD1TFjvDP"
+        },
+        {
+          "name": "pool_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool_account"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_offset",
+          "type": "u128"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_primary_stake",
+      "discriminator": [
+        94,
+        143,
+        48,
+        229,
+        76,
+        163,
+        156,
+        12
+      ],
+      "accounts": [
+        {
+          "name": "from",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "from_ta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "from"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "from"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_queue",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  101,
+                  81,
+                  117,
+                  101,
+                  117,
+                  101,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "primary_stake_account"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "address": "BoVUVSJAhob2cvM5z4JZTdS6VWRSznh3bbzQD1TFjvDP"
+        },
+        {
+          "name": "pool_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool_account"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "clock",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "fee_basis_points",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "init_stake_master_acc",
+      "discriminator": [
+        148,
+        195,
+        79,
+        88,
+        168,
+        94,
+        72,
+        182
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "master_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "merge_delegated_stake_account",
+      "discriminator": [
+        29,
+        112,
+        122,
+        209,
+        215,
+        222,
+        210,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "delegation_authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "withdrawal_authority"
+        },
+        {
+          "name": "delegation_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "delegation_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "withdrawal_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "withdrawal_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_acc_to_keep",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset_keep"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_acc_to_close",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset_close"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_queue",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  101,
+                  81,
+                  117,
+                  101,
+                  117,
+                  101,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "stake_acc_to_keep.delegation_target",
+                "account": "DelegatedStakingAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_stake_offset_keep",
+          "type": "u128"
+        },
+        {
+          "name": "_stake_offset_close",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "modify_primary_stake",
+      "discriminator": [
+        137,
+        255,
+        89,
+        82,
+        234,
+        74,
+        248,
+        245
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "signer_ta",
+          "writable": true
+        },
+        {
+          "name": "primary_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  114,
+                  105,
+                  109,
+                  97,
+                  114,
+                  121,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "address": "BoVUVSJAhob2cvM5z4JZTdS6VWRSznh3bbzQD1TFjvDP"
+        },
+        {
+          "name": "pool_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  80,
+                  111,
+                  111,
+                  108,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool_account"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "diff",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "set_delegation_authority",
+      "discriminator": [
+        136,
+        63,
+        130,
+        110,
+        201,
+        182,
+        66,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "old_delegation_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_delegation_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "new_delegator"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_delegator",
+          "docs": [
+            "checks"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_offset",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "set_withdrawal_authority",
+      "discriminator": [
+        2,
+        250,
+        241,
+        96,
+        55,
+        170,
+        121,
+        42
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "old_withdrawal_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_withdrawal_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "new_withdrawer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_withdrawer",
+          "docs": [
+            "checks"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_offset",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "split_delegated_stake_account",
+      "discriminator": [
+        191,
+        188,
+        48,
+        128,
+        187,
+        99,
+        18,
+        141
+      ],
+      "accounts": [
+        {
+          "name": "delegation_authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "withdrawal_authority"
+        },
+        {
+          "name": "delegation_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "delegation_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "withdrawal_master",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  77,
+                  97,
+                  115,
+                  116,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "withdrawal_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "old_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "_stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "_stake_offset_new"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_queue",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  116,
+                  97,
+                  107,
+                  101,
+                  81,
+                  117,
+                  101,
+                  117,
+                  101,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "old_stake_account.delegation_target",
+                "account": "DelegatedStakingAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_stake_offset",
+          "type": "u128"
+        },
+        {
+          "name": "_stake_offset_new",
+          "type": "u128"
+        },
+        {
+          "name": "new_acc_balance",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "undelegate_stake",
+      "discriminator": [
+        49,
+        132,
+        245,
+        247,
+        97,
+        129,
+        220,
+        101
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  68,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  100,
+                  83,
+                  116,
+                  97,
+                  107,
+                  105,
+                  110,
+                  103,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "stake_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "primary",
+          "docs": [
+            "comparing it to the delegation target inside the instruction code."
+          ],
+          "writable": true
+        },
+        {
+          "name": "clock",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  108,
+                  111,
+                  99,
+                  107,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                153,
+                89,
+                189,
+                10,
+                99,
+                5,
+                197,
+                115,
+                205,
+                251,
+                227,
+                58,
+                99,
+                177,
+                59,
+                219,
+                67,
+                157,
+                187,
+                1,
+                46,
+                241,
+                131,
+                120,
+                38,
+                92,
+                206,
+                139,
+                130,
+                93,
+                10,
+                119
+              ]
+            }
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_offset",
+          "type": "u128"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ClockAccount",
+      "discriminator": [
+        152,
+        171,
+        158,
+        195,
+        75,
+        61,
+        51,
+        8
+      ]
+    },
+    {
+      "name": "DelegatedStakingAccount",
+      "discriminator": [
+        165,
+        137,
+        123,
+        165,
+        71,
+        68,
+        208,
+        96
+      ]
+    },
+    {
+      "name": "DelegationMasterAccount",
+      "discriminator": [
+        110,
+        23,
+        213,
+        100,
+        7,
+        45,
+        1,
+        162
+      ]
+    },
+    {
+      "name": "PrimaryStakingAccount",
+      "discriminator": [
+        119,
+        201,
+        85,
+        90,
+        23,
+        169,
+        26,
+        56
+      ]
+    },
+    {
+      "name": "StakeQueueAccount",
+      "discriminator": [
+        15,
+        188,
+        244,
+        255,
+        163,
+        69,
+        203,
+        100
+      ]
+    },
+    {
+      "name": "StakingPoolAccount",
+      "discriminator": [
+        197,
+        149,
+        223,
+        199,
+        86,
+        73,
+        227,
+        77
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "LockupTooShort"
+    },
+    {
+      "code": 6001,
+      "name": "StakeNotUnlocked"
+    },
+    {
+      "code": 6002,
+      "name": "StakeNotInactive"
+    },
+    {
+      "code": 6003,
+      "name": "StakeNotActive"
+    },
+    {
+      "code": 6004,
+      "name": "RewardsNotClaimed"
+    },
+    {
+      "code": 6005,
+      "name": "RewardsAlreadyClaimed"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidAuthority"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidMasterAccount"
+    },
+    {
+      "code": 6008,
+      "name": "NoDelegationTarget"
+    },
+    {
+      "code": 6009,
+      "name": "SelfDelegationTooLow"
+    },
+    {
+      "code": 6010,
+      "name": "DelegationTooLow"
+    },
+    {
+      "code": 6011,
+      "name": "TooManyDelegations"
+    },
+    {
+      "code": 6012,
+      "name": "EpochNotPassed"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidRewardParam"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidClaim"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidActivation"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidMerge"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidSplit"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidOffset"
+    },
+    {
+      "code": 6019,
+      "name": "PrimaryAccountAlreadyInUse"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidPrimaryStakingAcc"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidDeactivationEpoch"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidHeight",
+      "msg": "Invalid MT height"
+    },
+    {
+      "code": 6023,
+      "name": "InvalidLeaf",
+      "msg": "Invalid MT leaf"
+    },
+    {
+      "code": 6024,
+      "name": "TreeFull",
+      "msg": "MT tree is full"
+    },
+    {
+      "code": 6025,
+      "name": "SerializationFailed",
+      "msg": "Borsh serialization failed"
+    }
+  ],
+  "types": [
+    {
+      "name": "ActivatingStake",
+      "docs": [
+        "The stake account that is being activated/deactivated. i64 since we can deactivate stake.",
+        "Hard coded size of the array because Anchor can't handle vars or consts for sizes,",
+        "only literal numerics"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "activations",
+            "type": {
+              "array": [
+                {
+                  "vec": {
+                    "defined": {
+                      "name": "StakeDiff"
+                    }
+                  }
+                },
+                2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Authority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "delegation_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "withdrawal_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClockAccount",
+      "docs": [
+        "An account storing the current network epoch"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "start_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "current_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "start_epoch_timestamp",
+            "type": {
+              "defined": {
+                "name": "Timestamp"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CompressedMT",
+      "generics": [
+        {
+          "kind": "const",
+          "name": "HEIGHT",
+          "type": "usize"
+        }
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "leaf_count",
+            "type": "u16"
+          },
+          {
+            "name": "nodes",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Hash"
+                  }
+                },
+                {
+                  "generic": "HEIGHT"
+                }
+              ]
+            }
+          },
+          {
+            "name": "root",
+            "type": {
+              "defined": {
+                "name": "Hash"
+              }
+            }
+          },
+          {
+            "name": "batching_rate",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DelegatedStakingAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": {
+              "defined": {
+                "name": "Authority"
+              }
+            }
+          },
+          {
+            "name": "delegation_target",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "stake",
+            "docs": [
+              "stake amount in this account"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "stake_index",
+            "docs": [
+              "Stake index in the stake queue of the primary account we're delegated to"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "lockup",
+            "type": {
+              "defined": {
+                "name": "Lockup"
+              }
+            }
+          },
+          {
+            "name": "claimed_rewards",
+            "docs": [
+              "whether the rewards for this stake for the period between",
+              "activation and deactivation have been claimed"
+            ],
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DelegationMasterAccount",
+      "docs": [
+        "Tracks the offsets of the [DelegatedStakingAccount]s over which a user has authority.",
+        "",
+        "# Note",
+        "",
+        "We cap the number of accounts to [MAX_STAKE_ACCOUNTS] (which is set to 128 for now, but this can",
+        "be increased if necessary)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "accounts",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "OwnedStakingAccReference"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Epoch",
+      "docs": [
+        "The network epoch"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          "u64"
+        ]
+      }
+    },
+    {
+      "name": "Hash",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lockup",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "activation_epoch",
+            "docs": [
+              "epoch at which the stake was activated. Epoch::MAX if inactive."
+            ],
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "unlock_epoch",
+            "docs": [
+              "epoch from which on active stake can be deactivated. Epoch::MAX if inactive"
+            ],
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "deactivation_epoch",
+            "docs": [
+              "epoch the stake was deactivated, Epoch::MAX if still active"
+            ],
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MTProof",
+      "generics": [
+        {
+          "kind": "const",
+          "name": "HEIGHT",
+          "type": "usize"
+        }
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "leaf_index",
+            "type": "u16"
+          },
+          {
+            "name": "opening",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Hash"
+                  }
+                },
+                {
+                  "generic": "HEIGHT"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OwnedStakingAccReference",
+      "docs": [
+        "Reference to a delegated staking account owned by the user"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offset",
+            "type": "u128"
+          },
+          {
+            "name": "delegation_authority",
+            "type": "bool"
+          },
+          {
+            "name": "withdrawal_authority",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrimaryStakingAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "primary_stake",
+            "docs": [
+              "Primary stake amount in this account that is less than the",
+              "stake mandated by the hw capacity of the associated node"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "excess_primary_stake",
+            "docs": [
+              "Primary stake amount in this account that is more than the",
+              "stake mandated by the hw capacity of the associated node",
+              "(i.e. rewards get applied w sublinear curve)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "delegated_stake",
+            "type": "u64"
+          },
+          {
+            "name": "lockup",
+            "type": {
+              "defined": {
+                "name": "Lockup"
+              }
+            }
+          },
+          {
+            "name": "claimed_rewards",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "rewards_mt",
+            "type": {
+              "defined": {
+                "name": "CompressedMT",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "15"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "current_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "fee_basis_points",
+            "type": "u16"
+          },
+          {
+            "name": "operating_node",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "new_cu_claim",
+            "docs": [
+              "Optional new cu claim to be activated at the end of the epoch"
+            ],
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "activating_stake",
+            "type": {
+              "defined": {
+                "name": "ActivatingStake"
+              }
+            }
+          },
+          {
+            "name": "reward_buffer",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "RewardClaim"
+                }
+              }
+            }
+          },
+          {
+            "name": "rent_claims",
+            "type": {
+              "defined": {
+                "name": "RentClaimMap"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RentClaim",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "val",
+            "type": "u64"
+          },
+          {
+            "name": "offset",
+            "type": "u128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RentClaimMap",
+      "docs": [
+        "Maintains a list of rent claims for a given offset. Is always sorted by offset.",
+        "Workaround because Anchor doesn't support BTreeMaps/HashMaps yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claims",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "RentClaim"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardBatch",
+      "docs": [
+        "The reason this type exists is we mostly use RewardClaim as the input for leaves in the",
+        "MerkleTree. These leaves have to have a certain constant batching rate. Unfortunately Anchor",
+        "doesn't support defining array length based on a variable or constant for inputs, it has to be a",
+        "numeric. To avoid having to manually check everywhere we submit a batch of RewardClaims, we",
+        "define this type to have it in one place where we can apply our assert_size macro to make sure",
+        "it doesn't deviate from our defined constant using cargo test.",
+        "Other note: A simpler way to define this type would be",
+        "`type RewardBatch = [RewardClaim; 1];` but Anchor at runtime",
+        "thinks any RewardBatch it is all zeroes for whatever reason, so we do this."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claims",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "RewardClaim"
+                  }
+                },
+                1
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardClaim",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_rewards",
+            "type": "u64"
+          },
+          {
+            "name": "primary_stake",
+            "type": "u64"
+          },
+          {
+            "name": "primary_excess",
+            "type": "u64"
+          },
+          {
+            "name": "delegated_stake",
+            "type": "u64"
+          },
+          {
+            "name": "index_within_hw",
+            "docs": [
+              "All stakes at the indices until and including this one are considered to be within the",
+              "hardware requirements of the node."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Stake",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stake",
+            "type": "u64"
+          },
+          {
+            "name": "invoker_offset",
+            "type": "u128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeDiff",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "diff",
+            "type": "i64"
+          },
+          {
+            "name": "invoker_offset",
+            "type": "u128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeQueueAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hw_stake_index",
+            "docs": [
+              "Index until which the stake is under or equal to the requirement of the node hardware"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "queue",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Stake"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakingPoolAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Timestamp",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

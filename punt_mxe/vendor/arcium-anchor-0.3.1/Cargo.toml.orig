@@ -1,0 +1,21 @@
+[package]
+name = "arcium-anchor"
+description = "A helper crate for integrating Arcium into Solana programs."
+version = "0.3.1"
+edition = "2021"
+license = "GPL-3.0-or-later"
+homepage = "https://www.arcium.com"
+
+[lib]
+name = "arcium_anchor"
+
+[dependencies]
+anchor-lang.workspace = true
+anchor-spl.workspace = true
+
+arcium-client = { path = "../client", default-features = false, version = "0.3.0" }
+arcium-macros = { path = "../macros", version = "0.3.0" }
+sha2-const-stable = "0.1.0"
+
+[features]
+default = []

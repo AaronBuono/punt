@@ -1,0 +1,21 @@
+[package]
+name = "arcium-macros"
+description = "Helper macros for developing Solana programs that integrate with the Arcium network."
+version = "0.3.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+homepage = "https://www.arcium.com"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+arcis-interface = { path = "../arcis-interface", version = "0.3.0" }
+convert_case = "0.8.0"
+proc-macro2 = "1.0.86"
+quote = "1.0.36"
+sha2 = { workspace = true }
+syn = { version = "2.0.74", features = ["full", "extra-traits", "parsing", "visit-mut"] }
+
+[lints.clippy]
+uninlined_format_args = "allow"

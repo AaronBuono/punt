@@ -1,0 +1,23 @@
+[package]
+name = "arcium-client"
+description = "A client-side library for interacting with the Arcium Solana program."
+version = "0.3.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+homepage = "https://www.arcium.com"
+
+[features]
+default = ["transactions"]
+transactions = ["anchor-client", "anchor-spl", "const-crypto"]
+staking = []
+
+[dependencies]
+anchor-lang.workspace = true
+anchor-client = { workspace = true, optional = true }
+anchor-spl = { workspace = true, optional = true }
+bytemuck = { workspace = true }
+const-crypto = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
+
+[lints.clippy]
+uninlined_format_args = "allow"

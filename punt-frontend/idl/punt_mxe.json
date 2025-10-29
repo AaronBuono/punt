@@ -1,0 +1,1195 @@
+{
+  "address": "3gaXj1oSXKqn9rTgcPahqU9z3L2fjYexKYpmU1xNhefL",
+  "metadata": {
+    "name": "punt_mxe",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Arcium & Anchor"
+  },
+  "instructions": [
+    {
+      "name": "init_store_bet_comp_def",
+      "discriminator": [
+        150,
+        204,
+        186,
+        117,
+        53,
+        159,
+        11,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "BKck65TgoKRokMjQM3datB9oRwJ8rAj2jxPXvHXUvcL6"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "store_bet",
+      "discriminator": [
+        56,
+        47,
+        198,
+        117,
+        207,
+        36,
+        15,
+        1
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "7MGSS4iKNM4sVib7bDZDJhVqB6EcchPwVnTKenCY1jt3"
+        },
+        {
+          "name": "clock_account",
+          "address": "FHriyvoZotYiFnbUzKFjzRSb2NiaC8RPWY7jtKuKhg65"
+        },
+        {
+          "name": "bet_meta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  101,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "computation_offset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "BKck65TgoKRokMjQM3datB9oRwJ8rAj2jxPXvHXUvcL6"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "bettor_wallet",
+          "type": "pubkey"
+        },
+        {
+          "name": "poll_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "arcis_public_key",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "ciphertext",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "store_bet_callback",
+      "discriminator": [
+        216,
+        236,
+        215,
+        138,
+        185,
+        165,
+        124,
+        121
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "BKck65TgoKRokMjQM3datB9oRwJ8rAj2jxPXvHXUvcL6"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "bet_meta",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "writable": true
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "ComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "StoreBetOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BetComputationMeta",
+      "discriminator": [
+        207,
+        62,
+        151,
+        49,
+        155,
+        171,
+        181,
+        180
+      ]
+    },
+    {
+      "name": "ClockAccount",
+      "discriminator": [
+        152,
+        171,
+        158,
+        195,
+        75,
+        61,
+        51,
+        8
+      ]
+    },
+    {
+      "name": "Cluster",
+      "discriminator": [
+        236,
+        225,
+        118,
+        228,
+        173,
+        106,
+        18,
+        60
+      ]
+    },
+    {
+      "name": "ComputationDefinitionAccount",
+      "discriminator": [
+        245,
+        176,
+        217,
+        221,
+        253,
+        104,
+        172,
+        200
+      ]
+    },
+    {
+      "name": "FeePool",
+      "discriminator": [
+        172,
+        38,
+        77,
+        146,
+        148,
+        5,
+        51,
+        242
+      ]
+    },
+    {
+      "name": "MXEAccount",
+      "discriminator": [
+        103,
+        26,
+        85,
+        250,
+        179,
+        159,
+        17,
+        117
+      ]
+    },
+    {
+      "name": "SignerAccount",
+      "discriminator": [
+        127,
+        212,
+        7,
+        180,
+        17,
+        50,
+        249,
+        193
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BetQueuedEvent",
+      "discriminator": [
+        61,
+        240,
+        24,
+        52,
+        107,
+        23,
+        202,
+        215
+      ]
+    },
+    {
+      "name": "BetStoredEvent",
+      "discriminator": [
+        24,
+        40,
+        230,
+        212,
+        111,
+        203,
+        1,
+        206
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "AbortedComputation",
+      "msg": "The computation was aborted"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidCiphertextLength",
+      "msg": "Ciphertext length does not match expected size"
+    },
+    {
+      "code": 6002,
+      "name": "ClusterNotSet",
+      "msg": "Cluster not set"
+    }
+  ],
+  "types": [
+    {
+      "name": "Activation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "activation_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "deactivation_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "BetComputationMeta",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bettor_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "poll_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "computation_offset",
+            "type": "u64"
+          },
+          {
+            "name": "arcis_public_key",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "ciphertext",
+            "type": {
+              "vec": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BetQueuedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bettor_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "poll_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "computation_offset",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BetStoredEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bettor_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "poll_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "computation_offset",
+            "type": "u64"
+          },
+          {
+            "name": "bet_meta",
+            "type": "pubkey"
+          },
+          {
+            "name": "arcis_public_key",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CircuitSource",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Local",
+            "fields": [
+              {
+                "defined": {
+                  "name": "LocalCircuitSource"
+                }
+              }
+            ]
+          },
+          {
+            "name": "OnChain",
+            "fields": [
+              {
+                "defined": {
+                  "name": "OnChainCircuitSource"
+                }
+              }
+            ]
+          },
+          {
+            "name": "OffChain",
+            "fields": [
+              {
+                "defined": {
+                  "name": "OffChainCircuitSource"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClockAccount",
+      "docs": [
+        "An account storing the current network epoch"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "start_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "current_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "start_epoch_timestamp",
+            "type": {
+              "defined": {
+                "name": "Timestamp"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Cluster",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "max_size",
+            "type": "u32"
+          },
+          {
+            "name": "activation",
+            "type": {
+              "defined": {
+                "name": "Activation"
+              }
+            }
+          },
+          {
+            "name": "max_capacity",
+            "type": "u64"
+          },
+          {
+            "name": "cu_price",
+            "type": "u64"
+          },
+          {
+            "name": "cu_price_proposals",
+            "type": {
+              "array": [
+                "u64",
+                32
+              ]
+            }
+          },
+          {
+            "name": "last_updated_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "mxes",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "nodes",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "NodeRef"
+                }
+              }
+            }
+          },
+          {
+            "name": "pending_nodes",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "NodeRef"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationDefinitionAccount",
+      "docs": [
+        "An account representing a [ComputationDefinition] in a MXE."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "finalization_authority",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "finalize_during_callback",
+            "type": "bool"
+          },
+          {
+            "name": "cu_amount",
+            "type": "u64"
+          },
+          {
+            "name": "definition",
+            "type": {
+              "defined": {
+                "name": "ComputationDefinitionMeta"
+              }
+            }
+          },
+          {
+            "name": "circuit_source",
+            "type": {
+              "defined": {
+                "name": "CircuitSource"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationDefinitionMeta",
+      "docs": [
+        "A computation definition for execution in a MXE."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "circuit_len",
+            "type": "u32"
+          },
+          {
+            "name": "signature",
+            "type": {
+              "defined": {
+                "name": "ComputationSignature"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationOutputs",
+      "generics": [
+        {
+          "kind": "type",
+          "name": "O"
+        }
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Success",
+            "fields": [
+              {
+                "generic": "O"
+              }
+            ]
+          },
+          {
+            "name": "Failure"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationSignature",
+      "docs": [
+        "The signature of a computation defined in a [ComputationDefinition]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "parameters",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Parameter"
+                }
+              }
+            }
+          },
+          {
+            "name": "outputs",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Output"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Epoch",
+      "docs": [
+        "The network epoch"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          "u64"
+        ]
+      }
+    },
+    {
+      "name": "FeePool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocalCircuitSource",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "MxeKeygen"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MXEAccount",
+      "docs": [
+        "A MPC Execution Environment."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "cluster",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "x25519_pubkey",
+            "type": {
+              "defined": {
+                "name": "X25519Pubkey"
+              }
+            }
+          },
+          {
+            "name": "fallback_clusters",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "rejected_clusters",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "computation_definitions",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NodeRef",
+      "docs": [
+        "A reference to a node in the cluster.",
+        "The offset is to derive the Node Account.",
+        "The current_total_rewards is the total rewards the node has received so far in the current",
+        "epoch."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offset",
+            "type": "u32"
+          },
+          {
+            "name": "current_total_rewards",
+            "type": "u64"
+          },
+          {
+            "name": "vote",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OffChainCircuitSource",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "source",
+            "type": "string"
+          },
+          {
+            "name": "hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OnChainCircuitSource",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "is_completed",
+            "type": "bool"
+          },
+          {
+            "name": "upload_auth",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Output",
+      "docs": [
+        "An output of a computation.",
+        "We currently don't support encrypted outputs yet since encrypted values are passed via",
+        "data objects."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "PlaintextBool"
+          },
+          {
+            "name": "PlaintextU8"
+          },
+          {
+            "name": "PlaintextU16"
+          },
+          {
+            "name": "PlaintextU32"
+          },
+          {
+            "name": "PlaintextU64"
+          },
+          {
+            "name": "PlaintextU128"
+          },
+          {
+            "name": "Ciphertext"
+          },
+          {
+            "name": "ArcisPubkey"
+          },
+          {
+            "name": "PlaintextFloat"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Parameter",
+      "docs": [
+        "A parameter of a computation.",
+        "We differentiate between plaintext and encrypted parameters and data objects.",
+        "Plaintext parameters are directly provided as their value.",
+        "Encrypted parameters are provided as an offchain reference to the data.",
+        "Data objects are provided as a reference to the data object account."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "PlaintextBool"
+          },
+          {
+            "name": "PlaintextU8"
+          },
+          {
+            "name": "PlaintextU16"
+          },
+          {
+            "name": "PlaintextU32"
+          },
+          {
+            "name": "PlaintextU64"
+          },
+          {
+            "name": "PlaintextU128"
+          },
+          {
+            "name": "Ciphertext"
+          },
+          {
+            "name": "ArcisPubkey"
+          },
+          {
+            "name": "ArcisSignature"
+          },
+          {
+            "name": "PlaintextFloat"
+          },
+          {
+            "name": "ManticoreAlgo"
+          },
+          {
+            "name": "InputDataset"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SignerAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StoreBetOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "StoreBetOutputStruct0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "StoreBetOutputStruct0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "StoreBetOutputStruct00"
+              }
+            }
+          },
+          {
+            "name": "field_1",
+            "type": {
+              "defined": {
+                "name": "StoreBetOutputStruct01"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "StoreBetOutputStruct00",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "field_1",
+            "type": "u128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Timestamp",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "X25519Pubkey",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Set",
+            "fields": [
+              {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Unset",
+            "fields": [
+              {
+                "array": [
+                  "u8",
+                  32
+                ]
+              },
+              {
+                "vec": "bool"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

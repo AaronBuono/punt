@@ -110,7 +110,7 @@ export function StreamPreview({ authority, roomName, active, className, refreshK
       track.attach(videoEl);
     };
 
-    const handleTrackSubscribed = (_track: Track, publication: unknown, participant: unknown) => {
+    const handleTrackSubscribed = (_track: Track) => {
       if (cancelled) return;
       if (_track.kind !== Track.Kind.Video) return;
       const track = _track as RemoteVideoTrack;

@@ -34,15 +34,6 @@ function normalizeLogs(logs?: readonly string[]) {
   return Array.isArray(logs) ? logs : [];
 }
 
-function publicKeyEquals(target: PublicKey, candidate: string) {
-  try {
-    const key = new PublicKey(candidate);
-    return key.equals(target);
-  } catch {
-    return false;
-  }
-}
-
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

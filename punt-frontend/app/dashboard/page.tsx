@@ -191,10 +191,10 @@ export default function MyBetsPage() {
                       <div className="col-span-2 text-right">Outcome</div>
                     </div>
                     <ul className="divide-y divide-white/10">
-                      {bets.map((bet, index) => {
+                      {bets.map((bet) => {
                         const { prediction, amount, outcome } = formatBetData(bet.betData);
                         return (
-                          <li key={bet.computationOffset || index} className="grid grid-cols-12 items-center px-4 py-3 hover:bg-white/5">
+                          <li key={bet.betId} className="grid grid-cols-12 items-center px-4 py-3 hover:bg-white/5">
                             <div className="col-span-3 text-sm text-white/90">
                               {formatDate(bet.storedAt)}
                             </div>

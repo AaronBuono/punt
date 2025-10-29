@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { demoMarkets, formatSol, formatSolDetailed, formatUsd } from "../markets";
+import { demoMarkets, formatSolDetailed, formatUsd } from "../markets";
 
 const chartHeight = 160;
 const chartWidth = 420;

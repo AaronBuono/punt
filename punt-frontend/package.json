@@ -1,6 +1,7 @@
 {
   "name": "punt-frontend",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Privacy-preserving prediction markets with Arcium encryption - Frontend application for Solana hackathon",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,6 +14,7 @@
     "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
+    "@arcium-hq/client": "^0.3.0",
     "@coral-xyz/anchor": "^0.31.1",
     "@solana/wallet-adapter-react": "^0.15.39",
     "@solana/wallet-adapter-react-ui": "^0.9.39",

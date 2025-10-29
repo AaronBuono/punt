@@ -1,25 +1,89 @@
-# Punt - Privacy-Preserving Prediction Markets
+# Punt - Live Prediction Markets for Pokémon Pack Openings
 
-> **Arcium Hackathon Submission** - Encrypted bet storage using Arcium's encryption SDK with database storage
+> **Solana Hackathon Submission** | **Arcium Sidetrack Submission**
 
 ## 🎯 Overview
 
-Punt is a Solana-based prediction market platform for livestreams that uses **Arcium encryption** to protect user bet data. Individual bets are encrypted client-side using Arcium's x25519 key exchange and Rescue cipher, ensuring betting privacy while maintaining transparent market resolution.
+Punt is a **Solana-based prediction market platform** for livestreamed Pokémon pack openings. Streamers broadcast their pack openings via LiveKit, viewers place bets on what cards will be pulled, and an AI agent automatically resolves markets using Google Vision API.
 
-### Why Privacy Matters in Prediction Markets
+### Core Features
 
-Traditional on-chain prediction markets expose critical information:
-- **Front-running**: Bots copy whale bets when they see large transactions
-- **Market manipulation**: Large traders can influence odds by revealing positions
-- **Privacy concerns**: All betting history is permanently public
+- 🎥 **LiveKit Integration**: Real-time streaming with host/viewer modes
+- 🎮 **Solana Smart Contracts**: On-chain prediction markets with instant settlement
+- 🤖 **AI-Powered Resolution**: Google Vision API detects cards and resolves bets automatically
+- 🔐 **Arcium Encryption**: Optional privacy layer for bet data (Arcium sidetrack submission)
+- 💰 **Instant Payouts**: Claim winnings immediately after market resolution
 
-Punt solves this with **privacy-preserving encryption** powered by Arcium.
+
+### Why Pokémon Pack Openings?
+
+The Pokémon TCG market is **huge**:
+- $10B+ annual market
+- Millions of pack opening streams on YouTube/Twitch
+- No existing platform for real-time betting on pulls
+
+**Problems with current solutions:**
+- Traditional prediction markets are slow and manual
+- Streamers manually resolve bets (error-prone, time-consuming)
+- No privacy for bets (whales influence market odds)
+
+**Punt solves this:**
+- ⚡ **Instant markets**: Create polls in seconds during streams
+- 🤖 **Auto-resolution**: AI detects cards and settles bets automatically
+- 🔐 **Privacy option**: Arcium encryption hides bet amounts from public view
+- 💎 **Solana-powered**: Low fees, instant settlement, transparent on-chain history
 
 ---
 
-## 🔐 Arcium Integration
+## 🎬 How It Works
 
-### Architecture
+### 1. Streamer Setup (Studio Mode)
+```
+Streamer opens pack → Creates poll ("Will this pack have a Charizard?")
+                   ↓
+              Poll goes live → Viewers place bets (YES/NO)
+                   ↓
+         Streamer opens pack → Reveals cards on camera
+                   ↓
+    Streamer freezes poll → AI agent watches stream
+                   ↓
+      Google Vision API → Detects "Charizard" in frame
+                   ↓
+    Auto-resolve market → Solana smart contract pays winners
+```
+
+### 2. Viewer Experience (Watch Mode)
+- Connect wallet (Phantom, Solflare, etc.)
+- Watch live stream via LiveKit
+- Place bets on active polls (0.01 - 10 SOL)
+- See live odds update as others bet
+- **Optional**: Encrypt bets with Arcium for privacy
+- Claim winnings instantly after resolution
+
+### 3. AI Agent (Automated Resolution)
+- Monitors LiveKit room for freeze signal
+- Samples video frames when poll is frozen
+- Uses Google Vision API to detect card names
+- Compares detected cards against poll criteria
+- Submits resolution transaction to Solana
+- Market settles automatically
+
+---
+
+## 🔐 Arcium Integration (Sidetrack Submission)
+
+As an **optional privacy feature**, Punt integrates Arcium's encryption SDK to protect bet data.
+
+### Why Privacy Matters for Prediction Markets
+
+Traditional on-chain prediction markets expose all bet information:
+- **Whale watching**: Large bets influence market odds and behavior
+- **Front-running**: Bots copy successful betting patterns
+- **Privacy concerns**: All betting history is permanently public
+
+### How Arcium Helps
+
+**Current Implementation: Client-Side Encryption**
 
 ```
 ┌─────────────────┐
@@ -93,6 +157,81 @@ The `punt_mxe/` directory contains an Arcium MXE (Multi-Party Execution) program
 
 ---
 
+## 🏗️ Technical Architecture
+
+### Solana Smart Contract (`punt-program/`)
+
+**Core Instructions:**
+- `initialize_market`: Create new prediction market for a poll
+- `place_bet`: Lock SOL in escrow for YES/NO position
+- `freeze_market`: Stop accepting new bets
+- `resolve_market`: Settle market and determine winners
+- `claim_winnings`: Withdraw winnings after resolution
+- `withdraw_fees`: Host collects platform fees
+
+**PDA Structure:**
+```rust
+// Market PDA: [authority, cycle]
+// Ticket PDA: [user, market]
+// AuthorityMeta: Stores cycle counter per streamer
+```
+
+**Key Features:**
+- Cycle-based markets (multiple rounds per stream)
+- Fee collection (configurable per market)
+- Event emission for frontend tracking
+- Ticket-based bet accounting
+
+### Frontend (`punt-frontend/`)
+
+**Tech Stack:**
+- Next.js 15 (App Router)
+- React 19
+- Solana Web3.js + Anchor
+- LiveKit Client SDK
+- Prisma + Neon PostgreSQL
+- Tailwind CSS 4
+
+**Key Pages:**
+- `/studio` - Host controls (initialize/freeze/resolve markets)
+- `/watch` - Viewer experience (place bets, watch stream)
+- `/live` - Browse active streams
+- `/dashboard` - View bet history (with Arcium decryption)
+
+**API Routes:**
+- `/api/livekit/token` - Generate LiveKit access tokens
+- `/api/stream` - Manage stream metadata
+- `/api/store-bet` - Encrypt and store bet data (Arcium)
+- `/api/get-bets` - Retrieve and decrypt bet history (Arcium)
+
+### AI Agent (`ai-agent/`)
+
+**Technology:**
+- LiveKit Server SDK (room monitoring)
+- Google Vision API (card detection)
+- Solana Web3.js (transaction submission)
+- TypeScript
+
+**Workflow:**
+1. Join LiveKit room as participant
+2. Listen for freeze chat message from host
+3. Sample video frames at configured rate
+4. Run OCR + object detection via Google Vision
+5. Parse detected text for card names/rarities
+6. Match against poll criteria (e.g., "Charizard detected?")
+7. Submit `resolve_market` transaction to Solana
+8. Emit result to chat for transparency
+
+**Configuration:**
+```env
+GOOGLE_APPLICATION_CREDENTIALS=./google-vision-key.json
+VISION_MIN_CONFIDENCE=0.85
+FRAME_SAMPLE_RATE_HZ=2
+AUTO_SOLANA_RESOLVE=true
+```
+
+---
+
 ## 🏗️ Project Structure
 
 ```
@@ -120,8 +259,10 @@ punt/
 │   │   └── punt_mxe/      # MXE computation definitions
 │   └── encrypted-ixs/     # Arcis confidential compute instructions
 │
-└── ai-agent/              # LiveKit automation agent
-    └── visionProcessor.ts # Google Vision API for card detection
+└── ai-agent/              # LiveKit + Google Vision automation
+    ├── visionProcessor.ts # Card detection logic
+    ├── livekitAgent.ts    # Stream monitoring
+    └── cardLookup.ts      # Pokémon card database
 ```
 
 ---
@@ -151,24 +292,37 @@ cp .env.example .env.local
 
 ### Environment Configuration
 
-#### Required: Arcium Encryption Keys
-
-Generate server-side keys for Arcium encryption:
-
-```bash
-cd punt-frontend
-./scripts/generate-arcium-keys.sh
-```
-
-Add the output to `.env.local`:
+#### Required: Solana Program
 
 ```env
-# Arcium Encryption (Required)
-ARCIUM_PAYER_SECRET_KEY=<generated_base58_key>
-ARCIUM_CLIENT_SECRET_KEY=<generated_base58_key>
+# Punt Program (deploy to devnet/mainnet)
+NEXT_PUBLIC_PROGRAM_ID=<your_deployed_program_id>
+NEXT_PUBLIC_NETWORK=https://api.devnet.solana.com
 ```
 
-#### Required: Database
+Deploy the program:
+
+```bash
+cd punt-program
+anchor build
+anchor deploy --provider.cluster devnet
+
+# Copy IDL to frontend
+cd ../punt-frontend
+npm run copy-idl
+```
+
+#### Required: LiveKit Streaming
+
+```env
+LIVEKIT_URL=wss://your-livekit-instance.livekit.cloud
+LIVEKIT_API_KEY=<your_api_key>
+LIVEKIT_API_SECRET=<your_api_secret>
+```
+
+Get credentials from: https://cloud.livekit.io
+
+#### Required: Database (for stream metadata)
 
 ```env
 # Neon PostgreSQL
@@ -182,32 +336,32 @@ npx prisma migrate deploy
 npx prisma generate
 ```
 
-#### Required: Solana Program
+#### Optional: Arcium Encryption (Sidetrack Feature)
 
-```env
-# Punt Program (Devnet)
-NEXT_PUBLIC_PROGRAM_ID=<your_deployed_program_id>
-NEXT_PUBLIC_NETWORK=https://api.devnet.solana.com
-```
-
-Deploy the program:
+Generate server-side keys for Arcium encryption:
 
 ```bash
-cd ../punt-program
-anchor build
-anchor deploy --provider.cluster devnet
-
-# Copy IDL to frontend
-cd ../punt-frontend
-npm run copy-idl
+cd punt-frontend
+./scripts/generate-arcium-keys.sh
 ```
 
-#### Optional: LiveKit Streaming
+Add the output to `.env.local`:
 
 ```env
-LIVEKIT_URL=wss://your-livekit-instance.livekit.cloud
-LIVEKIT_API_KEY=<your_api_key>
-LIVEKIT_API_SECRET=<your_api_secret>
+# Arcium Encryption (Optional - for bet privacy)
+ARCIUM_PAYER_SECRET_KEY=<generated_base58_key>
+ARCIUM_CLIENT_SECRET_KEY=<generated_base58_key>
+```
+
+#### Optional: AI Agent (Google Vision)
+
+```env
+# In ai-agent/.env
+GOOGLE_APPLICATION_CREDENTIALS=./google-vision-key.json
+VISION_MIN_CONFIDENCE=0.85
+FRAME_SAMPLE_RATE_HZ=2
+AUTO_SOLANA_RESOLVE=true
+SOLANA_WALLET_PATH=./dev-authority-keypair.json
 ```
 
 ### Run Development Server
@@ -218,9 +372,82 @@ npm run dev
 ```
 
 Visit:
-- **Watch**: http://localhost:3000/watch - Place bets (encrypted with Arcium)
-- **Dashboard**: http://localhost:3000/dashboard - View your encrypted bet history
-- **Studio**: http://localhost:3000/studio - Host controls (requires wallet signature)
+- **Watch**: http://localhost:3000/watch - View streams and place bets
+- **Studio**: http://localhost:3000/studio - Host controls for streamers
+- **Live**: http://localhost:3000/live - Browse active streams
+- **Dashboard**: http://localhost:3000/dashboard - View bet history (with Arcium decryption if enabled)
+
+### Run AI Agent (Optional)
+
+```bash
+cd ai-agent
+npm install
+npm run start
+```
+
+The agent will:
+- Join the LiveKit room specified in `.env`
+- Monitor for freeze signals from the host
+- Detect cards using Google Vision API
+- Auto-resolve markets on Solana
+
+---
+
+## 🎮 Demo Flow
+
+### Full User Journey
+
+1. **Streamer Setup**
+   ```bash
+   # Navigate to /studio
+   # Connect wallet (becomes authority)
+   # Click "Start Stream" → LiveKit room created
+   ```
+
+2. **Create Market**
+   ```bash
+   # In studio: Click "Initialize Market"
+   # Solana transaction: initialize_market(authority, cycle)
+   # Poll appears: "Will this pack have a rare card?"
+   ```
+
+3. **Viewers Join**
+   ```bash
+   # Navigate to /watch?authority=<streamer_wallet>
+   # Connect wallet, see live stream + active poll
+   # Place bet: 0.5 SOL on YES
+   # Transaction: place_bet(market, side: YES, amount: 0.5)
+   ```
+
+4. **Pack Opening**
+   ```bash
+   # Streamer opens physical Pokémon pack on camera
+   # Viewers watch live via LiveKit
+   # More bets come in, odds update in real-time
+   ```
+
+5. **Freeze Market**
+   ```bash
+   # Streamer clicks "Freeze Poll"
+   # Transaction: freeze_market(market)
+   # Chat message sent: "🧊 Poll frozen by host"
+   # AI agent detects freeze signal
+   ```
+
+6. **AI Resolution**
+   ```bash
+   # AI agent samples video frames (2 FPS)
+   # Google Vision detects: "Charizard VMAX - Ultra Rare"
+   # Agent determines: Market criteria MET (rare card found)
+   # Transaction: resolve_market(market, outcome: YES)
+   ```
+
+7. **Claim Winnings**
+   ```bash
+   # YES bettors see "Claim Winnings" button
+   # Transaction: claim_winnings(market, ticket)
+   # SOL transferred to wallet instantly
+   ```
 
 ---
 
@@ -376,33 +603,83 @@ model EncryptedBet {
 
 ---
 
-## 🎯 Hackathon Submission Highlights
+## 🎯 Solana Hackathon Highlights
 
-### Innovation (Privacy-Preserving Markets)
-- **First** prediction market to use Arcium encryption for bet privacy
-- Prevents front-running and whale manipulation
-- Enables privacy without centralized trust
+### Innovation
+- **First** prediction market platform designed specifically for Pokémon TCG streamers
+- **AI-powered resolution**: Google Vision API + Solana smart contracts
+- **LiveKit integration**: Seamless streaming + betting experience
+- **Optional privacy**: Arcium encryption for whale protection
 
 ### Technical Implementation
-- ✅ Production-ready Arcium SDK integration
-- ✅ Client-side encryption (browser-based, no server trust)
-- ✅ Ultra-compact payload encoding (7-10 ciphertext blocks)
-- ✅ Database-agnostic (works with any storage backend)
-- 🚧 MXE program for future on-chain encrypted computation
+- ✅ Production-ready Anchor program with 10+ instructions
+- ✅ Full-stack Next.js 15 application (App Router)
+- ✅ LiveKit real-time video streaming integration
+- ✅ Google Vision API for automated card detection
+- ✅ Cycle-based market system for multiple rounds per stream
+- ✅ PDA-based ticket accounting for gas efficiency
+- ✅ Prisma + Neon PostgreSQL for stream metadata
+- 🚧 Arcium encryption SDK integration (sidetrack submission)
 
 ### Impact & Utility
-- **Problem**: $50B+ prediction market industry plagued by information asymmetry
-- **Solution**: Privacy-preserving bets protect retail traders from whales
-- **Result**: Fair odds for all participants without trusting centralized servers
+- **Market**: $10B+ Pokémon TCG industry with millions of pack opening streams
+- **Problem**: No real-time betting platform for Pokémon content creators
+- **Solution**: Instant markets + AI resolution + Solana settlement
+- **Users**: Streamers earn fees, viewers get entertainment + potential winnings
 
-### Clarity
-- Clear architecture diagrams showing Arcium integration points
-- Comprehensive code comments explaining encryption flow
-- Working demo at http://punt-demo.vercel.app (hypothetical)
+### Code Quality
+- Comprehensive error handling in smart contracts
+- Event emission for frontend tracking
+- TypeScript throughout (frontend + agent)
+- Clean separation: contracts / frontend / AI agent
+- Well-documented setup instructions
+
+---
+
+## 🏆 Arcium Sidetrack Submission
+
+### What We Built
+
+Punt integrates **Arcium's encryption SDK** as an optional privacy layer for bet data:
+
+- ✅ **Client-side encryption**: x25519 key exchange + Rescue cipher
+- ✅ **Privacy-preserving storage**: Encrypted bets in Neon PostgreSQL
+- ✅ **Owner-only decryption**: Dashboard shows your bet history
+- 🚧 **MXE program**: Prepared for future on-chain encrypted computation
+
+### Why Arcium for Prediction Markets
+
+**Problem**: Whale bets influence market odds and betting behavior
+
+**Solution**: Encrypt bet amounts before storage
+- Server never sees plaintext bet data
+- Only bet owner can decrypt their history
+- Market odds remain fair without whale influence
+
+### Technical Deep Dive
+
+See [Arcium Integration](#-arcium-integration-sidetrack-submission) section above for:
+- Architecture diagrams
+- Encryption flow (key generation → payload encoding → Rescue cipher)
+- Code examples
+- Future MXE roadmap
 
 ---
 
 ## 🧪 Testing
+
+### Smart Contract Tests
+```bash
+cd punt-program
+anchor test
+```
+
+Tests cover:
+- Market initialization with different fee structures
+- Bet placement with various amounts and sides
+- Market freezing and resolution
+- Ticket creation and claiming winnings
+- Fee withdrawal by authority
 
 ### Frontend Tests
 ```bash
@@ -410,25 +687,30 @@ cd punt-frontend
 npm test
 ```
 
-### Test Bet Encryption Locally
-```bash
-# Start dev server
-npm run dev
+Tests cover:
+- Bet toggle group component
+- Payout calculations
+- LiveKit smoke tests
+- Poll selection flow
 
-# In browser console (http://localhost:3000/watch)
-# Place a bet and check Network tab → /api/store-bet
-# Verify only encrypted data is sent to server
+### AI Agent Testing
+```bash
+cd ai-agent
+# Set LIVEKIT_SMOKE=1 in .env
+npm run start
+
+# In another terminal, send test freeze signal
+node scripts/sendFreeze.js
 ```
 
-### Verify Database Encryption
-```bash
-# Connect to your database
-psql $DATABASE_URL
-
-# Check that bet details are encrypted
-SELECT wallet, "encryptedData", nonce FROM "EncryptedBet" LIMIT 1;
-# You should see only ciphertext, not plaintext amounts/sides
-```
+### Manual End-to-End Test
+1. Start frontend: `cd punt-frontend && npm run dev`
+2. Start AI agent: `cd ai-agent && npm run start`
+3. Navigate to `/studio` and connect wallet
+4. Initialize market, place some bets
+5. Freeze market (sends chat message)
+6. AI agent detects freeze, samples frames
+7. Verify auto-resolution on Solana
 
 ---
 
@@ -452,46 +734,55 @@ vercel --prod
 ### Environment Variables Checklist
 
 **Required:**
-- ✅ `DATABASE_URL` - PostgreSQL connection string
-- ✅ `ARCIUM_PAYER_SECRET_KEY` - Generated via `generate-arcium-keys.sh`
-- ✅ `ARCIUM_CLIENT_SECRET_KEY` - Generated via `generate-arcium-keys.sh`
+- ✅ `DATABASE_URL` - PostgreSQL for stream metadata
 - ✅ `NEXT_PUBLIC_PROGRAM_ID` - Deployed Punt program ID
 - ✅ `NEXT_PUBLIC_NETWORK` - Solana RPC endpoint
+- ✅ `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` - Streaming
 
-**Optional:**
-- `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` - For streaming features
+**Optional (Arcium Sidetrack):**
+- `ARCIUM_PAYER_SECRET_KEY` - For bet encryption
+- `ARCIUM_CLIENT_SECRET_KEY` - For bet encryption
 
 ---
 
 ## 🛣️ Roadmap
 
-### Phase 1: Client-Side Encryption (✅ Complete)
+### Phase 1: Core Platform (✅ Complete - Solana Hackathon)
+- [x] Solana smart contracts (markets, betting, resolution)
+- [x] LiveKit streaming integration
+- [x] Google Vision AI agent for card detection
+- [x] Full-stack Next.js frontend
+- [x] Wallet integration (Phantom, Solflare, etc.)
+- [x] Real-time odds calculation
+
+### Phase 2: Privacy Layer (✅ Complete - Arcium Sidetrack)
 - [x] Arcium SDK integration
-- [x] x25519 key generation
-- [x] Rescue cipher encryption/decryption
-- [x] Database storage of encrypted bets
-- [x] Dashboard for viewing decrypted history
+- [x] Client-side bet encryption
+- [x] Encrypted bet storage in database
+- [x] Dashboard for viewing encrypted history
 
-### Phase 2: MXE Integration (🚧 In Progress)
+### Phase 3: MXE Integration (🚧 In Progress)
 - [ ] Deploy MXE program to mainnet
-- [ ] Implement `store_bet` computation
-- [ ] Add `aggregate_bets` for private volume calculation
-- [ ] Build ZK proofs for bet validity
+- [ ] On-chain encrypted bet storage
+- [ ] Private bet aggregation (compute odds on encrypted data)
+- [ ] Zero-knowledge proofs for bet validity
 
-### Phase 3: Advanced Privacy Features (📋 Planned)
-- [ ] Zero-knowledge proofs of winning bets
-- [ ] Private bet aggregation (total volume without revealing individuals)
-- [ ] Homomorphic encryption for odds calculation
-- [ ] Privacy-preserving payout distribution
+### Phase 4: Platform Growth (📋 Planned)
+- [ ] Multi-game support (Yu-Gi-Oh!, Magic: The Gathering)
+- [ ] Mobile app (React Native)
+- [ ] Creator revenue sharing
+- [ ] Tournament mode
+- [ ] Social features (leaderboards, achievements)
 
 ---
 
 ## 📚 Resources
 
-- **Arcium Docs**: https://docs.arcium.com
-- **Arcium SDK**: https://www.npmjs.com/package/@arcium-hq/client
 - **Solana Docs**: https://docs.solana.com
 - **Anchor Framework**: https://www.anchor-lang.com
+- **LiveKit**: https://docs.livekit.io
+- **Google Vision API**: https://cloud.google.com/vision/docs
+- **Arcium Docs**: https://docs.arcium.com (for encryption features)
 
 ---
 
@@ -499,8 +790,9 @@ vercel --prod
 
 - **Aaron Buono** - [@AaronBuono](https://github.com/AaronBuono)
   - Full-stack development
-  - Arcium integration
-  - Smart contract development
+  - Solana smart contract development
+  - LiveKit + Google Vision integration
+  - Arcium encryption implementation
 
 ---
 
@@ -512,9 +804,10 @@ MIT License - see LICENSE file for details
 
 ## 🙏 Acknowledgments
 
-- **Arcium Team** for the encryption SDK and MXE framework
-- **Solana Foundation** for the blockchain infrastructure
+- **Solana Foundation** for the blockchain infrastructure and hackathon
+- **Arcium Team** for the encryption SDK (sidetrack submission)
 - **LiveKit** for real-time streaming capabilities
+- **Google Cloud** for Vision API
 
 ---
 
@@ -522,8 +815,10 @@ MIT License - see LICENSE file for details
 
 - **Email**: aaronjacobbuono@gmail.com
 - **GitHub**: https://github.com/AaronBuono/punt
-- **Demo**: (Add your deployed URL here)
+- **Twitter**: @AaronBuono (if applicable)
+- **Demo**: (Add your deployed Vercel URL here)
 
 ---
 
-**Built with ❤️ for the Arcium Hackathon**
+**Built for Solana Hackathon 2025**  
+**Arcium Sidetrack: Privacy-Preserving Prediction Markets**

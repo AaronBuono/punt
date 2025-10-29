@@ -1,7 +1,7 @@
 {
   "name": "punt-frontend",
   "version": "1.0.0",
-  "description": "Privacy-preserving prediction markets with Arcium encryption - Frontend application for Solana hackathon",
+  "description": "Live prediction markets for Pokémon pack openings - Solana-powered platform with LiveKit streaming, AI-powered resolution, and optional Arcium encryption",
   "private": true,
   "scripts": {
     "dev": "next dev",

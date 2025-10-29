@@ -874,7 +874,50 @@ export default function WatchPage() {
       return false;
     }
     setSideChoice(side);
-    return run(side === 0 ? 'bet_yes' : 'bet_no', () => bet(wallet, { side, amountLamports: solToLamports(betAmount), marketAuthority: selectedAuthority || undefined }));
+    const result = await run(side === 0 ? 'bet_yes' : 'bet_no', async () => {
+      const betResult = await bet(wallet, { 
+        side, 
+        amountLamports: solToLamports(betAmount), 
+        marketAuthority: selectedAuthority || undefined 
+      });
+      
+      // Store encrypted bet in MXE
+      if (betResult && market && publicKey) {
+        try {
+          const response = await fetch('/api/store-bet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              wallet: publicKey.toBase58(),
+              pollId: `${market.authority}:${market.cycle}`,
+              betData: {
+                side: side,
+                amount: parseFloat(betAmount),
+                labelYes: market.labelYes || 'YES',
+                labelNo: market.labelNo || 'NO',
+                title: market.title || 'Prediction',
+                timestamp: new Date().toISOString(),
+                outcome: 'Pending',
+              },
+            }),
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('MXE storage failed:', errorData);
+          } else {
+            const data = await response.json();
+            console.log('✅ Bet stored in MXE:', data);
+          }
+        } catch (err) {
+          console.warn('Failed to store bet in MXE:', err);
+          // Don't fail the bet if MXE storage fails
+        }
+      }
+      
+      return betResult;
+    });
+    return result;
   };
 
   const submitBet = async () => {
@@ -883,13 +926,50 @@ export default function WatchPage() {
         addToast({ type: "error", message: "Poll frozen – no new bets allowed." });
         return;
       }
-      await run('bet_more', () =>
-        bet(wallet, {
+      const result = await run('bet_more', async () => {
+        const betResult = await bet(wallet, {
           side: ticket.side as 0 | 1,
           amountLamports: solToLamports(betAmount),
           marketAuthority: selectedAuthority || undefined,
-        })
-      );
+        });
+        
+        // Store encrypted bet in MXE
+        if (betResult && market && publicKey) {
+          try {
+            const response = await fetch('/api/store-bet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                wallet: publicKey.toBase58(),
+                pollId: `${market.authority}:${market.cycle}`,
+                betData: {
+                  side: ticket.side,
+                  amount: parseFloat(betAmount),
+                  labelYes: market.labelYes || 'YES',
+                  labelNo: market.labelNo || 'NO',
+                  title: market.title || 'Prediction',
+                  timestamp: new Date().toISOString(),
+                  outcome: 'Pending',
+                },
+              }),
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error('MXE storage failed:', errorData);
+            } else {
+              const data = await response.json();
+              console.log('✅ Bet stored in MXE:', data);
+            }
+          } catch (err) {
+            console.warn('Failed to store bet in MXE:', err);
+            // Don't fail the bet if MXE storage fails
+          }
+        }
+        
+        return betResult;
+      });
+      return result;
     } else {
       if (sideChoice === null) {
         addToast({ type: "error", message: "Select a side first." });

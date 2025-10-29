@@ -15,7 +15,7 @@ export function Header() {
   const navLinks = [
     { href: "/", label: "Browse" },
     { href: "/buy", label: "Markets" },
-    { href: "#", label: "Clips" },
+    { href: "/dashboard", label: "Dashboard" },
   ];
 
   const isActive = (href: string) => {

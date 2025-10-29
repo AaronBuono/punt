@@ -1,5 +1,5 @@
 "use client";
-import { Menu, Compass, ShoppingBag, Video, X } from "lucide-react";
+import { Menu, Compass, ShoppingBag, BarChart3, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,7 +21,7 @@ export function TwitchHeader() {
   const navLinks = [
     { href: "/", label: "Browse", icon: Compass },
     { href: "/buy", label: "Markets", icon: ShoppingBag },
-    { href: "/apply", label: "Apply to Stream", icon: Video },
+    { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   ];
 
   const isActive = (href: string) => {

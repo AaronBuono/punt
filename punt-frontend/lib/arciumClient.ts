@@ -170,13 +170,13 @@ export async function encryptBetPayload(payload: BetPayload): Promise<EncryptedB
   
   // Ultra-compact representation to fit in transaction size limits
   // Store only essential fields with minimal keys
-  const betData = payload.betData as any;
+  const betData = payload.betData as Record<string, unknown>;
   const compactPayload = {
     w: payload.wallet.substring(0, 8), // First 8 chars of wallet (just for reference, full wallet in account)
     p: payload.pollId.substring(0, 20), // Truncated poll ID
-    s: betData.side, // 0 or 1
-    a: betData.amount, // number
-    o: betData.outcome?.substring(0, 1) || 'P', // P=Pending, W=Win, L=Loss
+    s: betData.side as number, // 0 or 1
+    a: betData.amount as number, // number
+    o: (betData.outcome as string | undefined)?.substring(0, 1) || 'P', // P=Pending, W=Win, L=Loss
     t: payload.storedAt,
   };
   
@@ -243,7 +243,6 @@ export function getClientPublicKeyBase64(): string {
 }
 
 export function buildEncryptedArguments(ciphertext: EncryptedBetEnvelope): ArciumArgument[] {
-  const nonceBytes = Buffer.from(ciphertext.nonce, "hex");
   const nonceBigInt = BigInt(`0x${ciphertext.nonce}`);
   return [
     {

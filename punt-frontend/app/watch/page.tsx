@@ -325,6 +325,12 @@ export default function WatchPage() {
             }, "confirmed");
             ids.push(id);
           } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            if (errMsg.includes('WebSocket') || errMsg.includes('websocket')) {
+              console.warn("[watch] WebSocket not supported by RPC endpoint, falling back to polling");
+              setRealtimeStatus("idle");
+              return; // Exit early, polling will handle updates
+            }
             console.warn("[watch] invalid market pubkey for subscription", err);
           }
         }
@@ -336,6 +342,12 @@ export default function WatchPage() {
             }, "confirmed");
             ids.push(id);
           } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            if (errMsg.includes('WebSocket') || errMsg.includes('websocket')) {
+              console.warn("[watch] WebSocket not supported by RPC endpoint, falling back to polling");
+              setRealtimeStatus("idle");
+              return;
+            }
             console.warn("[watch] invalid ticket pubkey for subscription", err);
           }
         }
@@ -347,6 +359,12 @@ export default function WatchPage() {
             }, "processed");
             ids.push(id);
           } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            if (errMsg.includes('WebSocket') || errMsg.includes('websocket')) {
+              console.warn("[watch] WebSocket not supported by RPC endpoint, falling back to polling");
+              setRealtimeStatus("idle");
+              return;
+            }
             console.warn("[watch] invalid authority meta pubkey for subscription", err);
           }
         }
@@ -360,6 +378,13 @@ export default function WatchPage() {
           setRealtimeStatus("idle");
         }
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        if (errMsg.includes('WebSocket') || errMsg.includes('websocket')) {
+          console.warn("[watch] WebSocket not supported by RPC endpoint, using polling instead");
+          cleanupListeners();
+          setRealtimeStatus("idle");
+          return; // Don't retry, just use polling
+        }
         console.warn("[watch] realtime subscribe failed", err);
         cleanupListeners();
         setRealtimeStatus("disconnected");

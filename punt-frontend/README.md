@@ -1,6 +1,6 @@
 # Punt Frontend
 
-This project is a Next.js UI for the `punt_program` Anchor on-chain prediction market (sequential cycle-based markets per authority) with custom naming and simplified betting UX. The product name is now **Punt** (formerly a temporary placeholder "Stream Bets").
+This project is a Next.js UI for the `punt_program` Anchor on-chain prediction market (sequential cycle-based markets per authority) with custom naming and simplified betting UX. The product name is **Punt**.
 
 ## Quick Start
 

@@ -884,6 +884,14 @@ export default function WatchPage() {
       // Store encrypted bet in MXE
       if (betResult && market && publicKey) {
         try {
+          console.log('📝 Storing bet with market data:', {
+            title: market.title,
+            labelYes: market.labelYes,
+            labelNo: market.labelNo,
+            authority: market.authority,
+            cycle: market.cycle,
+          });
+          
           const response = await fetch('/api/store-bet', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -895,7 +903,7 @@ export default function WatchPage() {
                 amount: parseFloat(betAmount),
                 labelYes: market.labelYes || 'YES',
                 labelNo: market.labelNo || 'NO',
-                title: market.title || 'Prediction',
+                title: market.title || 'Prediction Market',
                 timestamp: new Date().toISOString(),
                 outcome: 'Pending',
               },
@@ -936,6 +944,14 @@ export default function WatchPage() {
         // Store encrypted bet in MXE
         if (betResult && market && publicKey) {
           try {
+            console.log('📝 Storing bet with market data:', {
+              title: market.title,
+              labelYes: market.labelYes,
+              labelNo: market.labelNo,
+              authority: market.authority,
+              cycle: market.cycle,
+            });
+            
             const response = await fetch('/api/store-bet', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -947,7 +963,7 @@ export default function WatchPage() {
                   amount: parseFloat(betAmount),
                   labelYes: market.labelYes || 'YES',
                   labelNo: market.labelNo || 'NO',
-                  title: market.title || 'Prediction',
+                  title: market.title || 'Prediction Market',
                   timestamp: new Date().toISOString(),
                   outcome: 'Pending',
                 },

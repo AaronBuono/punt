@@ -29,6 +29,7 @@ import { PollSummaryBar } from "@/components/PollSummaryBar";
 import { PredictionOverlay } from "@/components/stream/PredictionOverlay";
 import { BetToggleGroup } from "@/components/BetToggleGroup";
 import { TransactionHashRow } from "@/components/TransactionHashRow";
+import { BetOutcomeOverlay } from "@/components/BetOutcomeOverlay";
 import { useBootstrapMarketPolling } from "./useBootstrapMarketPolling";
 
 const PYTH_PRICE_FEEDS = {
@@ -73,12 +74,13 @@ export default function WatchPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [lastSignature, setLastSignature] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [autoOutcome, setAutoOutcome] = useState<{ kind: "won" | "lost"; amountSol: number; signature: string } | null>(null);
+  const [autoOutcome, setAutoOutcome] = useState<{ kind: "won" | "lost" | "frozen"; amountSol?: number; signature?: string; title?: string } | null>(null);
   const [autoProcessing, setAutoProcessing] = useState<"claim" | "close" | null>(null);
   const [autoFailure, setAutoFailure] = useState<{ claim: boolean; close: boolean }>({ claim: false, close: false });
   const busyRef = useRef(false);
   const autoHandledRef = useRef<{ claim: Set<string>; close: Set<string> }>({ claim: new Set(), close: new Set() });
   const prevMarketKeyRef = useRef<string | null>(null);
+  const prevMarketFrozenRef = useRef<boolean>(false);
   const realtimeRetryRef = useRef<number | null>(null);
   const refreshThrottleRef = useRef<number | null>(null);
   const realtimeConnectionRef = useRef<Connection | null>(null);
@@ -1026,6 +1028,25 @@ export default function WatchPage() {
     }
   }, [marketResolved, marketFrozen]);
 
+  // Detect when poll freezes to show overlay
+  useEffect(() => {
+    if (market) {
+      const currentFrozen = market.frozen;
+      const previousFrozen = prevMarketFrozenRef.current;
+      
+      // If market just transitioned to frozen state
+      if (currentFrozen && !previousFrozen) {
+        setAutoOutcome({ 
+          kind: 'frozen', 
+          title: market.title 
+        });
+      }
+      
+      // Update ref for next comparison
+      prevMarketFrozenRef.current = currentFrozen;
+    }
+  }, [market]);
+
   if (!mounted) {
     return (
       <main className="p-8 flex flex-col items-center gap-4 max-w-lg mx-auto text-center">
@@ -1042,7 +1063,7 @@ export default function WatchPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,1.05fr)] gap-4 items-start">
-  <div className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start lg:h-fit">
+  <div className="flex flex-col gap-4 lg:sticky lg:top-[72px] lg:self-start lg:h-fit">
           {selectedAuthority && (
             <div className="panel p-0 overflow-hidden lg:shadow-2xl">
               <div className="relative w-full bg-black aspect-video lg:min-h-[460px]">
@@ -1190,7 +1211,7 @@ export default function WatchPage() {
                           />
                         </div>
                         <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
-                          <div className="relative flex-[1_1_160px] min-w-[140px]">
+                          <div className="relative flex-[1_1_160px] min-w-[140px] max-w-full">
                             <input
                               type="number"
                               inputMode="decimal"
@@ -1204,13 +1225,13 @@ export default function WatchPage() {
                             />
                             <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-sm text-white">SOL</span>
                           </div>
-                          <div className="flex items-center gap-1 flex-1 min-w-[150px]">
-                            <div className="relative flex w-full items-center justify-between gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white h-[38px]">
-                              <span className="whitespace-nowrap">{formattedEstimate ? `~ ${formattedEstimate}` : '~ —'}</span>
+                          <div className="flex items-center gap-1 flex-1 min-w-[150px] max-w-full overflow-hidden">
+                            <div className="relative flex w-full items-center justify-between gap-2 rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white h-[38px] overflow-hidden">
+                              <span className="whitespace-nowrap text-ellipsis overflow-hidden flex-shrink min-w-0">{formattedEstimate ? `~ ${formattedEstimate}` : '~ —'}</span>
                               <select
                                 value={selectedCurrency}
                                 onChange={e => setSelectedCurrency(e.target.value as SupportedCurrency)}
-                                className="bg-transparent text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 border-none appearance-none pr-6"
+                                className="bg-transparent text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 border-none appearance-none pr-6 flex-shrink-0"
                               >
                                 {CURRENCY_CONFIG.map(option => (
                                   <option key={option.code} value={option.code} className="bg-black text-white">
@@ -1397,13 +1418,13 @@ export default function WatchPage() {
                   </div>
                 )}
 
-                {autoOutcome?.kind === 'won' && (
+                {autoOutcome?.kind === 'won' && autoOutcome.amountSol && (
                   <div className="space-y-1 rounded-md border border-emerald-400/60 bg-emerald-500/10 px-3 py-3 text-xs text-emerald-100">
                     <p className="text-sm font-semibold text-emerald-50">You won {autoOutcome.amountSol.toFixed(3)} SOL 🎉</p>
                     <p className="break-all font-mono text-[10px] text-emerald-200/80">Tx: {autoOutcome.signature}</p>
                   </div>
                 )}
-                {autoOutcome?.kind === 'lost' && (
+                {autoOutcome?.kind === 'lost' && autoOutcome.amountSol && (
                   <div className="space-y-1 rounded-md border border-[#b91c1c]/50 bg-[#7f1d1d]/40 px-3 py-3 text-xs text-[#fecaca]">
                     <p className="text-sm font-semibold">You lost {autoOutcome.amountSol.toFixed(3)} SOL. Better luck next time.</p>
                     <p className="break-all font-mono text-[10px] text-[#fca5a5]/90">Tx: {autoOutcome.signature}</p>
@@ -1499,6 +1520,12 @@ export default function WatchPage() {
   {lastSignature && (<TransactionHashRow signature={lastSignature} />)}
   {error && <p className="break-all text-[color:var(--accent)]">Error: {error}</p>}
       </div>
+
+      {/* Bet Outcome Overlay */}
+      <BetOutcomeOverlay 
+        outcome={autoOutcome} 
+        onDismiss={() => setAutoOutcome(null)} 
+      />
     </main>
   );
 }

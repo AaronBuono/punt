@@ -333,7 +333,7 @@ export default function MyBetsPage() {
                             </div>
                             <div className="col-span-2 text-right">
                               <div className="text-sm font-semibold text-white/90 tabular-nums">
-                                {Number(amount).toFixed(2)}
+                                {Number(amount) >= 0.01 ? Number(amount).toFixed(2) : Number(amount).toFixed(3)}
                               </div>
                               <div className="text-[10px] text-dim">SOL</div>
                             </div>

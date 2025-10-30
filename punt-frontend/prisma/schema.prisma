@@ -33,12 +33,17 @@ model EncryptedBet {
   pollId             String
   side               Int
   amount             Float
+  pollTitle          String?  // Added: Name of the poll
+  winningSide        Int?     // Added: Winning side (0 or 1) when resolved
+  outcome            String   @default("Pending") // Added: Pending, Frozen, Win, Loss
   encryptedData      String   // Base64 encoded encrypted bet details
   nonce              String
   arcisPublicKey     String
   storedAt           DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt // Added: Track when bet outcome updated
 
   @@index([wallet])
   @@index([pollId])
   @@index([wallet, storedAt])
+  @@index([outcome])
 }

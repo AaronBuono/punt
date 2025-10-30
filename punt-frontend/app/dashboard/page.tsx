@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
 import type { BetRecord } from '../api/get-bets/route';
@@ -74,6 +74,48 @@ export default function MyBetsPage() {
     return { prediction, amount, outcome };
   };
 
+  // Calculate summary statistics
+  const stats = useMemo(() => {
+    const totalBets = bets.length;
+    const totalWagered = bets.reduce((sum, bet) => {
+      const { amount } = formatBetData(bet.betData);
+      return sum + Number(amount);
+    }, 0);
+
+    const wins = bets.filter(bet => {
+      const { outcome } = formatBetData(bet.betData);
+      return outcome === 'Win';
+    }).length;
+
+    const losses = bets.filter(bet => {
+      const { outcome } = formatBetData(bet.betData);
+      return outcome === 'Loss';
+    }).length;
+
+    // Calculate PnL (simplified: win = 2x back, loss = lose stake)
+    const totalPnl = bets.reduce((sum, bet) => {
+      const { amount, outcome } = formatBetData(bet.betData);
+      const amt = Number(amount);
+      if (outcome === 'Win') {
+        return sum + amt; // Profit = amount won (we get back 2x, so profit is 1x)
+      } else if (outcome === 'Loss') {
+        return sum - amt; // Lost the amount wagered
+      }
+      return sum; // Pending bets don't affect PnL yet
+    }, 0);
+
+    const winRate = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0;
+
+    return {
+      totalBets,
+      totalWagered,
+      totalPnl,
+      wins,
+      losses,
+      winRate,
+    };
+  }, [bets]);
+
   return (
     <main className="relative w-full py-10 px-6 xl:px-10 max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -94,6 +136,84 @@ export default function MyBetsPage() {
           Encrypted bet history powered by Arcium MXE • Auto-refreshes every 10s
         </p>
       </header>
+
+      {/* Summary Statistics */}
+      {connected && !loading && !error && bets.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Wagered */}
+          <div className="panel p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-dim">Total Wagered</p>
+                <p className="text-2xl font-bold text-white mt-1 tabular-nums">
+                  {stats.totalWagered.toFixed(2)} <span className="text-sm text-dim">SOL</span>
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <svg className="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Total P&L */}
+          <div className="panel p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-dim">Total P&L</p>
+                <p className={`text-2xl font-bold mt-1 tabular-nums ${stats.totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {stats.totalPnl >= 0 ? '+' : ''}{stats.totalPnl.toFixed(2)} <span className="text-sm text-dim">SOL</span>
+                </p>
+              </div>
+              <div className={`h-12 w-12 rounded-full flex items-center justify-center ${stats.totalPnl >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+                <svg className={`h-6 w-6 ${stats.totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {stats.totalPnl >= 0 ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  )}
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Win Rate */}
+          <div className="panel p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-dim">Win Rate</p>
+                <p className="text-2xl font-bold text-white mt-1 tabular-nums">
+                  {stats.winRate.toFixed(1)}<span className="text-sm text-dim">%</span>
+                </p>
+                <p className="text-[10px] text-dim mt-0.5">{stats.wins}W / {stats.losses}L</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                <svg className="h-6 w-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Total Bets */}
+          <div className="panel p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-dim">Total Bets</p>
+                <p className="text-2xl font-bold text-white mt-1 tabular-nums">
+                  {stats.totalBets}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <svg className="h-6 w-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Connection State */}
       {!connected ? (
@@ -183,41 +303,56 @@ export default function MyBetsPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-12 text-xs uppercase tracking-wide text-[#adadb8] px-4 py-2 border-b border-white/10">
-                      <div className="col-span-3">Date</div>
-                      <div className="col-span-2">Poll ID</div>
-                      <div className="col-span-3">Prediction</div>
+                    <div className="grid grid-cols-12 text-xs uppercase tracking-wide text-[#adadb8] px-4 py-3 border-b border-white/10 bg-white/5">
+                      <div className="col-span-2">Date</div>
+                      <div className="col-span-3">Poll</div>
+                      <div className="col-span-2">Prediction</div>
                       <div className="col-span-2 text-right">Amount</div>
-                      <div className="col-span-2 text-right">Outcome</div>
+                      <div className="col-span-3 text-right">Result</div>
                     </div>
                     <ul className="divide-y divide-white/10">
                       {bets.map((bet) => {
                         const { prediction, amount, outcome } = formatBetData(bet.betData);
+                        const betTitle = (bet.betData.title as string) || 'Prediction Market';
+                        const dateStr = formatDate(bet.storedAt);
+                        
                         return (
-                          <li key={bet.betId} className="grid grid-cols-12 items-center px-4 py-3 hover:bg-white/5">
-                            <div className="col-span-3 text-sm text-white/90">
-                              {formatDate(bet.storedAt)}
+                          <li key={bet.betId} className="grid grid-cols-12 items-center px-4 py-3 hover:bg-white/5 transition-colors">
+                            <div className="col-span-2 text-xs text-white/70">
+                              <div className="font-medium text-white/90">{dateStr.split(' ')[0]}</div>
+                              <div className="text-[10px] text-white/50">{dateStr.split(' ')[1]}</div>
                             </div>
-                            <div className="col-span-2 text-sm text-dim font-mono truncate">
-                              {bet.pollId.slice(0, 8)}...
+                            <div className="col-span-3 text-sm">
+                              <div className="font-medium text-white/90 truncate">{betTitle}</div>
+                              <div className="text-[10px] text-dim font-mono truncate">{bet.pollId.slice(0, 16)}...</div>
                             </div>
-                            <div className="col-span-3 text-sm text-white/90">
-                              {String(prediction)}
-                            </div>
-                            <div className="col-span-2 text-right text-sm text-white/90 tabular-nums">
-                              {Number(amount).toFixed(2)} SOL
+                            <div className="col-span-2 text-sm">
+                              <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded border border-white/10 bg-white/5 text-white/90">
+                                {String(prediction)}
+                              </span>
                             </div>
                             <div className="col-span-2 text-right">
+                              <div className="text-sm font-semibold text-white/90 tabular-nums">
+                                {Number(amount).toFixed(2)}
+                              </div>
+                              <div className="text-[10px] text-dim">SOL</div>
+                            </div>
+                            <div className="col-span-3 text-right">
                               <span
-                                className={`inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-md border ${
+                                className={`inline-flex px-3 py-1 text-xs font-bold rounded-md border ${
                                   outcome === 'Win'
-                                    ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                                     : outcome === 'Loss'
-                                    ? 'bg-red-500/10 text-red-300 border-red-500/20'
-                                    : 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20'
+                                    ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                                    : outcome === 'Frozen'
+                                    ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                                    : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
                                 }`}
                               >
-                                {String(outcome)}
+                                {outcome === 'Win' && '🏆 Won'}
+                                {outcome === 'Loss' && '❌ Lost'}
+                                {outcome === 'Frozen' && '🧊 Frozen'}
+                                {outcome === 'Pending' && '⏳ Pending'}
                               </span>
                             </div>
                           </li>

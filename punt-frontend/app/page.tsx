@@ -28,33 +28,9 @@ export default function Home() {
   ], []);
 
   return (
-    <main className="relative w-full flex flex-col gap-10">
-      {/* Beta Testing Banner */}
-      <section className="w-full px-6 xl:px-10 pt-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="relative overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent p-4 shadow-lg">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🎉</span>
-                <p className="text-sm sm:text-base font-semibold text-white">
-                  Punt Beta Testing Application Open Now!
-                </p>
-              </div>
-              <a
-                href="https://docs.google.com/forms/d/1I2bPiRVToZJPVXZB1NcybUzQ5zbN_Bz39hG5jqJSj0Y/edit"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-sm bg-[var(--accent)] text-[var(--accent-contrast)] hover:brightness-110 transition-all shadow-md whitespace-nowrap"
-              >
-                Apply Now
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
+    <main className="relative w-full flex flex-col">
       {/* Header background video */}
-  <section className="w-full px-6 xl:px-10 pt-10">
+      <section className="w-full px-6 xl:px-10 pt-10">
         <div className="max-w-7xl mx-auto">
           <div className="relative w-full aspect-[16/6] sm:aspect-[16/4] md:aspect-[16/3.25] lg:aspect-[16/2.75] xl:aspect-[16/2.2] overflow-hidden rounded-3xl border border-white/10 shadow-xl">
             <video
@@ -83,8 +59,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Beta Testing Banner */}
+      <section className="w-full px-6 xl:px-10 pt-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎉</span>
+                <p className="text-sm sm:text-base font-semibold text-white">
+                  Punt Beta Testing Application Open Now!
+                </p>
+              </div>
+              <a
+                href="https://docs.google.com/forms/d/1I2bPiRVToZJPVXZB1NcybUzQ5zbN_Bz39hG5jqJSj0Y/edit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm bg-[var(--accent)] text-[var(--accent-contrast)] hover:brightness-110 transition-all shadow-md whitespace-nowrap"
+              >
+                Apply Now
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Live / Upcoming */}
-      <section className="space-y-3 px-6 xl:px-10 py-10">
+      <section className="space-y-3 px-6 xl:px-10 pt-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 p-1">

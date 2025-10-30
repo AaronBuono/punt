@@ -32,7 +32,6 @@ export function BetOutcomeOverlay({ outcome, onDismiss }: BetOutcomeOverlayProps
   if (!outcome) return null;
 
   const isWin = outcome.kind === "won";
-  const isLoss = outcome.kind === "lost";
   const isFrozen = outcome.kind === "frozen";
   const formattedAmount = outcome.amountSol ? outcome.amountSol.toFixed(4) : "0.0000";
 
@@ -241,7 +240,7 @@ export function BetOutcomeOverlay({ outcome, onDismiss }: BetOutcomeOverlayProps
               {/* Message */}
               <p className="text-base font-semibold text-slate-300/80 animate-fade-in" 
                  style={{ animationDelay: '0.4s' }}>
-                Your bet didn't win this time
+                Your bet didn&apos;t win this time
               </p>
 
               {/* Transaction link */}

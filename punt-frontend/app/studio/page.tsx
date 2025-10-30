@@ -176,6 +176,27 @@ export default function StudioPage() {
             }
             if (label === 'freeze') {
               void notifyFreeze(res.txSig);
+              // Update all bets to 'Frozen' status
+              if (market) {
+                const pollId = `${market.authority}:${market.cycle}`;
+                fetch('/api/update-bets', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ pollId, status: 'frozen' }),
+                }).catch((err) => console.warn('Failed to update bets on freeze:', err));
+              }
+            }
+            if (label === 'resolve_yes' || label === 'resolve_no') {
+              // Update all bets to Win/Loss status
+              if (market) {
+                const pollId = `${market.authority}:${market.cycle}`;
+                const winningSide = label === 'resolve_yes' ? 0 : 1;
+                fetch('/api/update-bets', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ pollId, status: 'resolved', winningSide }),
+                }).catch((err) => console.warn('Failed to update bets on resolve:', err));
+              }
             }
           }
         } catch {/* ignore */}

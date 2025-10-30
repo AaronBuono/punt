@@ -60,6 +60,11 @@ export async function GET(request: NextRequest) {
         // Decrypt using Arcium
         const decrypted = await decryptBetPayload(envelope);
 
+        // Use pollTitle from database if available, fallback to decrypted data
+        if (encBet.pollTitle && (!decrypted.betData.title || decrypted.betData.title === 'Prediction Market')) {
+          decrypted.betData.title = encBet.pollTitle;
+        }
+
         bets.push({
           ...decrypted,
           betId: encBet.id,

@@ -65,6 +65,39 @@ export default function StudioPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [lastSignature, setLastSignature] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // AI Agent toggle
+  const [aiAgentEnabled, setAiAgentEnabled] = useState(false);
+  const aiAgentStorageKey = useMemo(() => 
+    publicKey ? `ai-agent-enabled:${publicKey.toBase58()}` : null, 
+    [publicKey]
+  );
+
+  useEffect(() => {
+    if (!aiAgentStorageKey) {
+      setAiAgentEnabled(false);
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem(aiAgentStorageKey);
+      setAiAgentEnabled(stored === 'true');
+    } catch {
+      setAiAgentEnabled(false);
+    }
+  }, [aiAgentStorageKey]);
+
+  const toggleAiAgent = useCallback(() => {
+    if (!aiAgentStorageKey) return;
+    const newValue = !aiAgentEnabled;
+    setAiAgentEnabled(newValue);
+    try {
+      window.localStorage.setItem(aiAgentStorageKey, String(newValue));
+    } catch {/* ignore quota issues */}
+    addToast({ 
+      type: "success", 
+      message: `AI Agent ${newValue ? 'enabled' : 'disabled'}` 
+    });
+  }, [aiAgentEnabled, aiAgentStorageKey, addToast]);
 
   // Create form
   const [title, setTitle] = useState("");
@@ -139,14 +172,62 @@ export default function StudioPage() {
       if (!res.ok) {
         const details = await res.json().catch(() => null);
         const message = (details && typeof details.error === 'string') ? details.error : `status ${res.status}`;
+        
+        // Don't show error if room doesn't exist (not streaming) - this is expected
+        if (message.includes("room does not exist") || message.includes("requested room")) {
+          console.info("[livekit] freeze notification skipped (not streaming)");
+          return;
+        }
+        
         console.warn("[livekit] freeze notify failed", message);
         addToast({ type: "error", message: `Freeze signal failed: ${message}` });
+      } else {
+        console.info("[livekit] freeze notification sent successfully");
       }
     } catch (err) {
       console.warn("[livekit] failed to publish freeze trigger", err);
       addToast({ type: "error", message: err instanceof Error ? err.message : "Freeze signal failed" });
     }
   }, [publicKey, signMessage, addToast]);
+
+  const triggerAiAgent = useCallback(async () => {
+    if (!publicKey) {
+      console.warn("[ai-agent] cannot trigger AI without authority");
+      return;
+    }
+
+    try {
+      const authority = publicKey.toBase58();
+      addToast({ type: "info", message: "🤖 AI Agent scanning cards..." });
+      
+      const res = await fetch("/api/ai-agent/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authority }),
+      });
+      
+      if (!res.ok) {
+        const details = await res.json().catch(() => null);
+        const message = (details && typeof details.error === 'string') ? details.error : `status ${res.status}`;
+        
+        // Don't show error if room doesn't exist (not streaming) - this is expected
+        if (message.includes("room does not exist") || message.includes("requested room")) {
+          console.info("[ai-agent] AI trigger skipped (not streaming)");
+          addToast({ type: "info", message: "🤖 AI Agent requires active stream" });
+          return;
+        }
+        
+        console.warn("[ai-agent] trigger failed", message);
+        addToast({ type: "error", message: `AI Agent failed: ${message}` });
+      } else {
+        const data = await res.json();
+        addToast({ type: "success", message: `🤖 AI scan complete: ${data.cardsScanned || 0} cards` });
+      }
+    } catch (err) {
+      console.warn("[ai-agent] failed to trigger AI agent", err);
+      addToast({ type: "error", message: err instanceof Error ? err.message : "AI Agent failed" });
+    }
+  }, [publicKey, addToast]);
 
   const run = async <T extends TxResult>(label: string, fn: () => Promise<T>): Promise<T | boolean> => {
     let succeeded = false;
@@ -175,7 +256,13 @@ export default function StudioPage() {
               fetch('/api/chat', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ authority: auth, text: sysMsgMap[label], type: 'system' }) }).catch(()=>{});
             }
             if (label === 'freeze') {
-              void notifyFreeze(); // Don't pass txSig - use message signing instead
+              void notifyFreeze(res.txSig); // Pass txSig to avoid double signature
+              
+              // Trigger AI agent if enabled
+              if (aiAgentEnabled) {
+                void triggerAiAgent();
+              }
+              
               // Update all bets to 'Frozen' status
               if (market) {
                 const pollId = `${market.authority}:${market.cycle}`;
@@ -240,6 +327,13 @@ export default function StudioPage() {
         console.warn("[studio] cannot sync market without wallet");
         return;
       }
+
+      console.log("[studio] publishMarketState called", { 
+        action: state ? 'update-market' : 'clear-market',
+        hasTxSig: !!txSig,
+        txSig: txSig?.slice(0, 8),
+        hasSignMessage: !!signMessage 
+      });
 
       try {
         const authority = publicKey.toBase58();
@@ -400,8 +494,6 @@ export default function StudioPage() {
     const outcome = await run('close', () => closeMarket(wallet));
     if (outcome !== false && hasTxSig(outcome)) {
       await publishMarketState(null, outcome.txSig);
-    } else if (outcome !== false) {
-      await publishMarketState(null);
     }
   };
 
@@ -508,6 +600,29 @@ export default function StudioPage() {
                 <div className="flex flex-wrap gap-2 pt-2">
                   {!market.resolved && (
                     <>
+                      {/* AI Agent Toggle */}
+                      <div className="w-full flex items-center justify-between bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/30 rounded-md px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-purple-300">🤖 AI Agent</span>
+                          <span className="text-[10px] text-white/60">
+                            {aiAgentEnabled ? 'Auto-scan on freeze' : 'Manual mode'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={toggleAiAgent}
+                          disabled={!connected}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                            aiAgentEnabled ? 'bg-purple-500' : 'bg-white/20'
+                          } disabled:opacity-50`}
+                        >
+                          <span
+                            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                              aiAgentEnabled ? 'translate-x-5' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      
                       {!market.frozen && (
                         <p className="w-full text-[11px] text-white/70 bg-white/5 border border-white/10 rounded-md px-3 py-2">
                           Freeze the poll to lock in wagers before selecting a result.

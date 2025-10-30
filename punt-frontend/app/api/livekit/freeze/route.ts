@@ -52,8 +52,14 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "invalid signature" }, { status: 401 });
     }
   } else {
-    const ok = await verifyAuthorityTransaction(txSig, authority, { expectedLog: "Instruction: FreezeMarket" });
+    console.log("[livekit] freeze verifying txSig", { txSig: txSig.slice(0, 8), authority });
+    const ok = await verifyAuthorityTransaction(txSig, authority, { 
+      expectedLog: "Instruction: FreezeMarket",
+      maxWaitMs: 10000 // Give it 10 seconds to confirm
+    });
+    console.log("[livekit] freeze txSig verification result", { ok, txSig: txSig.slice(0, 8) });
     if (!ok) {
+      console.warn("[livekit] freeze invalid txSig", { txSig: txSig.slice(0, 8), authority });
       return Response.json({ error: "invalid txSig" }, { status: 401 });
     }
   }

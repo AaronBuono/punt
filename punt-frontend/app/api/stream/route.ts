@@ -115,9 +115,13 @@ export async function PATCH(req: NextRequest) {
   let authenticated = false;
   if (txSig && (action === "update-market" || action === "clear-market")) {
     const expectedLog = action === "update-market" ? "Instruction: InitializeMarket" : "Instruction: CloseMarket";
-    authenticated = await verifyAuthorityTransaction(txSig, authority, { expectedLog });
+    // InitializeMarket can take longer to confirm, so give it more time
+    const maxWaitMs = action === "update-market" ? 10000 : 5000;
+    console.log("[stream] PATCH verifying txSig", { txSig, authority, action, expectedLog, maxWaitMs });
+    authenticated = await verifyAuthorityTransaction(txSig, authority, { expectedLog, maxWaitMs });
+    console.log("[stream] PATCH txSig verification result", { authenticated, txSig: txSig.slice(0, 8) });
     if (!authenticated) {
-      console.warn("[stream] PATCH txSig verification failed", { authority, action });
+      console.warn("[stream] PATCH txSig verification failed", { authority, action, txSig: txSig.slice(0, 8) });
     }
   }
 

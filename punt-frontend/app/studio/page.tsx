@@ -175,7 +175,7 @@ export default function StudioPage() {
               fetch('/api/chat', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ authority: auth, text: sysMsgMap[label], type: 'system' }) }).catch(()=>{});
             }
             if (label === 'freeze') {
-              void notifyFreeze(res.txSig);
+              void notifyFreeze(); // Don't pass txSig - use message signing instead
               // Update all bets to 'Frozen' status
               if (market) {
                 const pollId = `${market.authority}:${market.cycle}`;

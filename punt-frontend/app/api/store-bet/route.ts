@@ -77,6 +77,8 @@ export async function POST(request: NextRequest) {
         pollId: body.pollId,
         side: body.betData.side,
         amount: body.betData.amount,
+        pollTitle: body.betData.title as string | undefined,
+        outcome: 'Pending',
         encryptedData,
         nonce: encrypted.nonce,
         arcisPublicKey: encrypted.arcisPublicKey,

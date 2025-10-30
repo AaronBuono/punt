@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { StreamPreview } from '@/components/stream/StreamPreview';
@@ -10,10 +10,49 @@ export default function Home() {
   const { data } = useSWR<{ streams: { authority: string; roomName: string; active: boolean; viewerCount: number; lastFetched: number; title?: string | null }[] }>("/api/streams?active=1", fetcher, { refreshInterval: 6000 });
   const live = data?.streams || [];
   const [streamTab, setStreamTab] = useState<'live' | 'upcoming'>('live');
-  const upcoming = useMemo<Array<{ id: string; title: string; startsAt: string }>>(() => [], []);
+  
+  // Default to upcoming if no live streams
+  useEffect(() => {
+    if (data && live.length === 0) {
+      setStreamTab('upcoming');
+    }
+  }, [data, live.length]);
+  
+  const upcoming = useMemo<Array<{ id: string; title: string; startsAt: string; imageUrl?: string }>>(() => [
+    {
+      id: 'punt-beta',
+      title: 'Punt Beta',
+      startsAt: 'TBA',
+      imageUrl: '/og-image.png'
+    }
+  ], []);
 
   return (
     <main className="relative w-full flex flex-col gap-10">
+      {/* Beta Testing Banner */}
+      <section className="w-full px-6 xl:px-10 pt-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative overflow-hidden rounded-xl border border-[var(--accent)]/30 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎉</span>
+                <p className="text-sm sm:text-base font-semibold text-white">
+                  Punt Beta Testing Application Open Now!
+                </p>
+              </div>
+              <a
+                href="https://docs.google.com/forms/d/1I2bPiRVToZJPVXZB1NcybUzQ5zbN_Bz39hG5jqJSj0Y/edit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm bg-[var(--accent)] text-[var(--accent-contrast)] hover:brightness-110 transition-all shadow-md whitespace-nowrap"
+              >
+                Apply Now
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Header background video */}
   <section className="w-full px-6 xl:px-10 pt-10">
         <div className="max-w-7xl mx-auto">
@@ -101,9 +140,21 @@ export default function Home() {
             upcoming.length ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {upcoming.map((event) => (
-                  <div key={event.id} className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 text-[12px]">
-                    <p className="text-white/90 font-semibold truncate">{event.title}</p>
-                    <p className="text-dim mt-2">Starting {event.startsAt}</p>
+                  <div key={event.id} className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-md">
+                    {event.imageUrl && (
+                      <div className="relative aspect-video">
+                        <img 
+                          src={event.imageUrl} 
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
+                      </div>
+                    )}
+                    <div className="p-5 text-[12px]">
+                      <p className="text-white/90 font-semibold truncate">{event.title}</p>
+                      <p className="text-dim mt-2">Starting {event.startsAt}</p>
+                    </div>
                   </div>
                 ))}
               </div>

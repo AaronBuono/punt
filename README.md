@@ -815,8 +815,8 @@ MIT License - see LICENSE file for details
 
 - **Email**: aaronjacobbuono@gmail.com
 - **GitHub**: https://github.com/AaronBuono/punt
-- **Twitter**: @AaronBuono (if applicable)
-- **Demo**: (Add your deployed Vercel URL here)
+- **X**: @AJ__Buono
+- **Tech Demo Video**: https://www.youtube.com/watch?v=c1MXxfIp9SE
 
 ---
 

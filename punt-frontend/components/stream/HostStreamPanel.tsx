@@ -99,12 +99,10 @@ export function HostStreamPanel() {
     if (!authority) return;
     try {
       setLoadingAction("refresh");
-      const ts = Date.now().toString();
-      const sig = await requestSignature(`refresh-stream:${authority}:${ts}`);
       await fetch("/api/stream", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ authority, ts, sig, action: "refresh" }),
+        body: JSON.stringify({ authority, action: "refresh" }),
         cache: "no-store",
       });
       await mutate();
@@ -113,7 +111,7 @@ export function HostStreamPanel() {
     } finally {
       setLoadingAction(null);
     }
-  }, [authority, requestSignature, mutate, addToast]);
+  }, [authority, mutate, addToast]);
 
   const markOffline = useCallback(async (opts?: { suppressLoading?: boolean }) => {
     if (!authority) return;

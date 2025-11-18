@@ -112,6 +112,12 @@ export async function PATCH(req: NextRequest) {
     return new Response(JSON.stringify({ error: "marketPubkey required" }), { status: 400 });
   }
 
+  // No authentication needed for refresh action (read-only)
+  if (action === "refresh") {
+    const rec = await ensureAuthorityStream(authority);
+    return new Response(JSON.stringify({ stream: rec }), { status: 200 });
+  }
+
   let authenticated = false;
   if (txSig && (action === "update-market" || action === "clear-market")) {
     const expectedLog = action === "update-market" ? "Instruction: InitializeMarket" : "Instruction: CloseMarket";

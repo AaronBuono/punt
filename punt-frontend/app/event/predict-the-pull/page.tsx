@@ -210,7 +210,7 @@ export default function PredictThePullPage() {
                 <div className="bg-black/20 rounded-lg p-3 mt-3">
                   <p className="text-black font-bold text-xl">{cardWinnerName}</p>
                   {isCardWinner && (
-                    <p className="text-black/80 text-sm mt-1">That's you! 🎊</p>
+                    <p className="text-black/80 text-sm mt-1">That&apos;s you! 🎊</p>
                   )}
                 </div>
                 <p className="text-black/80 text-sm mt-3">Won the physical Ultra Rare card!</p>

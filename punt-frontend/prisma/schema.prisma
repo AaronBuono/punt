@@ -47,3 +47,37 @@ model EncryptedBet {
   @@index([wallet, storedAt])
   @@index([outcome])
 }
+
+// Event-specific models for live IRL betting events
+model EventPoll {
+  id              String        @id @default(cuid())
+  question        String        // "Will this pack contain an Ultra Rare or better?"
+  status          String        @default("active") // active, frozen, settled
+  outcome         String?       // ULTRA_RARE, NO_ULTRA_RARE
+  totalPot        Float         @default(0)
+  cardWinner      String?       // Wallet address of random card winner
+  createdAt       DateTime      @default(now())
+  settledAt       DateTime?
+  
+  bets            EventBet[]
+  
+  @@index([status])
+}
+
+model EventBet {
+  id              String        @id @default(cuid())
+  pollId          String
+  wallet          String
+  handle          String        // User's display name
+  choice          String        // YES, NO
+  stake           Float         @default(1) // Fixed $1 stake
+  payout          Float?        // Calculated payout if won
+  isCardWinner    Boolean       @default(false) // If Ultra Rare pulled, one random winner
+  createdAt       DateTime      @default(now())
+  
+  poll            EventPoll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  
+  @@index([pollId])
+  @@index([wallet])
+  @@index([pollId, choice])
+}

@@ -1,12 +1,12 @@
 "use client";
-import { Menu, Compass, ShoppingBag, BarChart3, X } from "lucide-react";
+import { Menu, Compass, ShoppingBag, BarChart3, X, ChevronDown, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { WalletBalance } from "./WalletBalance";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 // Wallet button SSR-safe
 const WalletMultiButton = dynamic(
@@ -17,11 +17,14 @@ const WalletMultiButton = dynamic(
 export function TwitchHeader() {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+  const adminDropdownRef = useRef<HTMLDivElement>(null);
   const navLinks = [
     { href: "/", label: "Browse", icon: Compass },
     { href: "/buy", label: "Markets", icon: ShoppingBag },
     { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
+    { href: "/event/predict-the-pull", label: "Event", icon: Calendar },
   ];
 
   const isActive = (href: string) => {
@@ -79,7 +82,20 @@ export function TwitchHeader() {
 
   useEffect(() => {
     setMobileNavOpen(false);
+    setAdminDropdownOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (adminDropdownRef.current && !adminDropdownRef.current.contains(event.target as Node)) {
+        setAdminDropdownOpen(false);
+      }
+    };
+    if (adminDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [adminDropdownOpen]);
 
   const mobileNavId = "punt-mobile-nav";
   const menuButtonHidden = !showMenuButton && !mobileNavOpen;
@@ -137,9 +153,35 @@ export function TwitchHeader() {
         >
           {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
-        {/* Studio link */}
+        {/* Admin dropdown */}
         {showStudioLink && (
-          <Link href="/studio" className="hidden sm:inline-flex items-center rounded-md px-3 py-2 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors">Studio</Link>
+          <div ref={adminDropdownRef} className="hidden sm:block relative">
+            <button
+              onClick={() => setAdminDropdownOpen(prev => !prev)}
+              className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors"
+            >
+              Admin
+              <ChevronDown className={`w-3 h-3 transition-transform ${adminDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {adminDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 rounded-md border border-white/10 bg-[#0E1525]/95 backdrop-blur-xl shadow-xl">
+                <div className="py-1">
+                  <Link
+                    href="/studio"
+                    className="block px-3 py-2 text-xs text-white/80 hover:bg-white/10 transition-colors"
+                  >
+                    Studio
+                  </Link>
+                  <Link
+                    href="/event/predict-the-pull/admin"
+                    className="block px-3 py-2 text-xs text-white/80 hover:bg-white/10 transition-colors"
+                  >
+                    Event
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         )}
     {/* Wallet balance */}
     {showWalletBalance && <WalletBalance />}
@@ -157,12 +199,21 @@ export function TwitchHeader() {
           >
             <nav className="flex flex-col gap-2 px-4 py-4">
               {hideStudioLink && (
-                <Link
-                  href="/studio"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium bg-white/5 text-white/80 hover:bg-white/10 transition-colors"
-                >
-                  Studio
-                </Link>
+                <>
+                  <div className="text-xs font-medium text-white/50 px-3 py-1">Admin</div>
+                  <Link
+                    href="/studio"
+                    className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium bg-white/5 text-white/80 hover:bg-white/10 transition-colors"
+                  >
+                    Studio
+                  </Link>
+                  <Link
+                    href="/event/predict-the-pull/admin"
+                    className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium bg-white/5 text-white/80 hover:bg-white/10 transition-colors"
+                  >
+                    Event
+                  </Link>
+                </>
               )}
               {hideBalance && (
                 <div className="pt-1">
